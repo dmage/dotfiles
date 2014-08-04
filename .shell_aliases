@@ -8,6 +8,8 @@ Darwin)
 	;;
 esac
 
+alias cfgit='git --git-dir="$HOME/.cfgit" --work-tree="$HOME"'
+
 alias grep='grep --color=auto --exclude=tags'
 alias ack='ack --color-match=bold\ red'
 alias pack='tar --dereference --exclude build --exclude .git --exclude .gitignore'
