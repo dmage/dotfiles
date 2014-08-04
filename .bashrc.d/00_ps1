@@ -1,0 +1,48 @@
+GIT_PS1=''
+if [ -r "$HOME/.homebrew/etc/bash_completion.d/git-prompt.sh" ]; then
+    . "$HOME/.homebrew/etc/bash_completion.d/git-prompt.sh"
+    GIT_PS1='$(__git_ps1)'
+elif [ -r /opt/local/share/git-core/contrib/completion/git-prompt.sh ]; then
+    . /opt/local/share/git-core/contrib/completion/git-prompt.sh
+    GIT_PS1='$(__git_ps1)'
+elif [ -r /opt/local/share/doc/git-core/contrib/completion/git-completion.bash ]; then
+    . /opt/local/share/doc/git-core/contrib/completion/git-completion.bash
+    GIT_PS1='$(__git_ps1)'
+fi
+
+if [ -r "$HOME/.homebrew/etc/bash_completion.d/git-completion.bash" ]; then
+    . "$HOME/.homebrew/etc/bash_completion.d/git-completion.bash"
+fi
+
+RAND_COLOR_FIRST=17
+RAND_COLOR_LAST=231
+
+PS1_SESSION='\D{%H:%M:%S} \h'
+PS1_PATH='\w'
+
+HOSTNAME=$(hostname)
+case $HOSTNAME in
+nibbler)
+    PS1_SESSION='\[\033[01;30m\]\D{%H:%M:%S}\[\033[01;32m\] \u@\h'
+    ;;
+esac
+
+__host_color() {
+    local hostname=$1
+
+    case $hostname in
+    nibbler)
+        echo "32";
+        ;;
+    *)
+        local numeric_hash=$(echo "$hostname" | cksum | cut -d' ' -f1)
+        local color_code=$(($numeric_hash % ($RAND_COLOR_LAST - $RAND_COLOR_FIRST + 1) + $RAND_COLOR_FIRST))
+        echo "38;05;$color_code"
+        ;;
+    esac
+}
+
+C_HOST="\\[\033[01;$(__host_color "$(hostname)")m\\]"
+C_PATH="\\[\033[01;34m\\]"
+C_RESET="\\[\033[00m\\]"
+export PS1="${C_HOST}$PS1_SESSION${C_PATH} $PS1_PATH$GIT_PS1\\\$${C_RESET} "
