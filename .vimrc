@@ -8,13 +8,23 @@ set encoding=utf8
 set modeline
 set modelines=65000
 let c_warn_trigraph = 1
+
+set viminfo='100,<50,s10,h
+
+set wildignore+=*/node_modules/*,*/bower_components/*
+
+map <C-S-F12> :!ctags -R --c++-kinds=+p --fields=+iaS --extra=+q .<CR>
+
+set t_Co=256
+
+"let g:airline_powerline_fonts=1
+
+" moving between windows
 nmap <silent> <A-Up> :wincmd k<CR>
 nmap <silent> <A-Down> :wincmd j<CR>
 nmap <silent> <A-Left> :wincmd h<CR>
 nmap <silent> <A-Right> :wincmd l<CR>
-map <C-S-F12> :!ctags -R --c++-kinds=+p --fields=+iaS --extra=+q .<CR>
 
-set viminfo='100,<50,s10,h
 
 " persistent undo
 try
@@ -22,3 +32,27 @@ try
   set undofile
 catch
 endtry
+
+
+" required for Vundle
+set nocompatible
+filetype off
+
+" set the runtime path to include Vundle and initialize
+set rtp+=~/.vim/bundle/Vundle.vim
+call vundle#begin()
+
+" let Vundle manage Vundle, required
+Plugin 'gmarik/Vundle.vim'
+
+Plugin 'ack.vim'
+Plugin 'ctrlp.vim'
+Plugin 'bling/vim-airline'
+
+call vundle#end()
+filetype plugin indent on
+
+
+" vim-airline
+set laststatus=2
+let g:airline_powerline_fonts = 1
