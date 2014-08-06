@@ -7,7 +7,9 @@ let c_warn_trigraph = 1
 set viminfo='100,<50,s10,h
 set wildignore+=*/node_modules/*,*/bower_components/*
 
-command Ctags :!ctags -R --exclude=*.min.* --exclude=*-min.* --c++-kinds=+p --fields=+iaS --extra=+q .
+command! Ctags :!ctags -R --exclude=*.min.* --exclude=*-min.* --c++-kinds=+p --fields=+iaS --extra=+q .
+
+cmap w!! w !sudo tee % >/dev/null
 
 " {{{ moving between windows
 nmap <silent> <M-Up> :wincmd k<CR>
@@ -41,6 +43,9 @@ Plugin 'ack.vim'
 Plugin 'ctrlp.vim'
 Plugin 'bling/vim-airline'
 Plugin 'majutsushi/tagbar'
+Plugin 'mhinz/vim-signify'
+Plugin 'tpope/vim-fugitive'
+Plugin 'scrooloose/syntastic'
 
 call vundle#end()
 filetype plugin indent on
@@ -77,4 +82,10 @@ let g:airline_symbols.whitespace = 'Ξ'
 
 " {{{ autocmd vim
 au FileType vim setl et ts=2 sts=2 sw=2 foldmethod=marker
+
+aug AutoloadVimrc
+  au!
+  au BufWritePost .vimrc source $MYVIMRC|set ft=vim
+  au BufWritePost .vimrc runtime! plugins/**/*.vim
+aug END
 " }}}
