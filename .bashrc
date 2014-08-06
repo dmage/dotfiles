@@ -7,10 +7,14 @@ fi
 [[ -f /etc/bash_completion ]] &&
     . /etc/bash_completion
 
-if [[ -f ~/.dir_colors ]] ; then
-    eval $(dircolors -b ~/.dir_colors)
-elif [[ -f /etc/DIR_COLORS ]] ; then
-    eval $(dircolors -b /etc/DIR_COLORS)
+if ! type -p dircolors >/dev/null ; then
+    if [[ -f ~/.dir_colors ]] ; then
+        eval $(dircolors -b ~/.dir_colors)
+    elif [[ -f /etc/DIR_COLORS ]] ; then
+        eval $(dircolors -b /etc/DIR_COLORS)
+    fi
+else
+    export LSCOLORS=gxfxbEaEBxxEhEhBaDaCaD
 fi
 
 #BSD#@export CLICOLOR=1

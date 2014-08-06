@@ -1,5 +1,7 @@
-" vim: et ts=2 sts=2 sw=2 spelllang= :
+" vim: et ts=2 sts=2 sw=2 spelllang= foldmethod=marker :
+
 syntax on
+
 set ruler
 set ts=4 sts=4 sw=4 et
 set termencoding=utf8
@@ -15,25 +17,22 @@ set wildignore+=*/node_modules/*,*/bower_components/*
 
 map <C-S-F12> :!ctags -R --c++-kinds=+p --fields=+iaS --extra=+q .<CR>
 
-set t_Co=256
+" {{{ moving between windows
+nmap <silent> <M-Up> :wincmd k<CR>
+nmap <silent> <M-Down> :wincmd j<CR>
+nmap <silent> <M-Left> :wincmd h<CR>
+nmap <silent> <M-Right> :wincmd l<CR>
+" }}}
 
-"let g:airline_powerline_fonts=1
-
-" moving between windows
-nmap <silent> <A-Up> :wincmd k<CR>
-nmap <silent> <A-Down> :wincmd j<CR>
-nmap <silent> <A-Left> :wincmd h<CR>
-nmap <silent> <A-Right> :wincmd l<CR>
-
-
-" persistent undo
+" {{{ persistent undo
 try
   set undodir=~/.vim/undo
   set undofile
 catch
 endtry
+" }}}
 
-
+" {{{ Vundle
 " required for Vundle
 set nocompatible
 filetype off
@@ -45,14 +44,39 @@ call vundle#begin()
 " let Vundle manage Vundle, required
 Plugin 'gmarik/Vundle.vim'
 
+Plugin 'altercation/vim-colors-solarized'
 Plugin 'ack.vim'
 Plugin 'ctrlp.vim'
 Plugin 'bling/vim-airline'
 
 call vundle#end()
 filetype plugin indent on
+" }}}
 
+" {{{ colors
+set t_Co=16
+set background=dark
+colorscheme solarized
+" }}}
 
-" vim-airline
+" {{{ vim-airline
 set laststatus=2
-let g:airline_powerline_fonts = 1
+let g:airline_theme = 'solarized'
+
+if !exists('g:airline_symbols')
+  let g:airline_symbols = {}
+endif
+
+let g:airline_left_sep = '»'
+let g:airline_left_sep = ''
+let g:airline_right_sep = '«'
+let g:airline_right_sep = ''
+let g:airline_symbols.linenr = '␊'
+let g:airline_symbols.linenr = '␤'
+let g:airline_symbols.linenr = '¶'
+let g:airline_symbols.branch = '⎇'
+let g:airline_symbols.paste = 'ρ'
+let g:airline_symbols.paste = 'Þ'
+let g:airline_symbols.paste = '∥'
+let g:airline_symbols.whitespace = 'Ξ'
+" }}}
