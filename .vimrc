@@ -1,18 +1,10 @@
-" vim: et ts=2 sts=2 sw=2 spelllang= foldmethod=marker :
-
 syntax on
-
 set ruler
 set ts=4 sts=4 sw=4 et
 set termencoding=utf8
 set encoding=utf8
-"set spell spelllang=en,ru
-set modeline
-set modelines=65000
 let c_warn_trigraph = 1
-
 set viminfo='100,<50,s10,h
-
 set wildignore+=*/node_modules/*,*/bower_components/*
 
 map <C-S-F12> :!ctags -R --c++-kinds=+p --fields=+iaS --extra=+q .<CR>
@@ -79,4 +71,8 @@ let g:airline_symbols.paste = 'ρ'
 let g:airline_symbols.paste = 'Þ'
 let g:airline_symbols.paste = '∥'
 let g:airline_symbols.whitespace = 'Ξ'
+" }}}
+
+" {{{ autocmd vim
+au FileType vim setl et ts=2 sts=2 sw=2 foldmethod=marker
 " }}}
