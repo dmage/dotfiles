@@ -1,0 +1,55 @@
+#!/bin/bash
+
+RESET="\033[0m"
+
+color1() {
+    local color_code=$1
+    printf " \033[38;05;%03dm%03d$RESET" $color_code $color_code
+}
+
+color2() {
+    local color_code=$1
+    printf " \033[38;05;%03dm%s$RESET" $color_code "███"
+}
+
+block() {
+    local o=$1 max_x=$2 max_y=$3 max_z=$4
+
+    for (( y=0; y < $max_y; y++ )); do
+        printf "%d" "$y"
+        for (( z=0; z < $max_z; z++ )); do
+            for (( x=0; x < $max_x; x++ )); do
+                color1 $(( $o + $max_x * $max_y * $z + $max_x * $y + $x ))
+            done
+            printf " "
+        done
+        printf "\n"
+
+        printf " "
+        for (( z=0; z < $max_z; z++ )); do
+            for (( x=0; x < $max_x; x++ )); do
+                color2 $(( $o + $max_x * $max_y * $z + $max_x * $y + $x ))
+            done
+            printf " "
+        done
+        printf "\n"
+    done
+}
+
+echo
+echo '\033[1;3X;4Ym  0 - reset, 1 - bold, 3X - foreground, 4Y - background'
+echo
+
+for i in {30..37}; do
+    printf "%d \033[%dmhello world$RESET  1;%d \033[1;%dmhello world$RESET\n" $i $i $i $i
+done
+printf "\n"
+
+block 0 8 2 1
+printf "\n"
+
+block 16 6 6 6
+printf "\n"
+
+block 232 24 1 1
+printf "\n"

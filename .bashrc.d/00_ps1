@@ -20,26 +20,12 @@ RAND_COLOR_LAST=231
 PS1_SESSION='\D{%H:%M:%S} \h'
 PS1_PATH='\w'
 
-HOSTNAME=$(hostname)
-case $HOSTNAME in
-nibbler)
-    PS1_SESSION='\[\033[01;30m\]\D{%H:%M:%S}\[\033[01;32m\] \u@\h'
-    ;;
-esac
-
 __host_color() {
     local hostname=$1
 
-    case $hostname in
-    nibbler)
-        echo "32";
-        ;;
-    *)
-        local numeric_hash=$(echo "$hostname" | cksum | cut -d' ' -f1)
-        local color_code=$(($numeric_hash % ($RAND_COLOR_LAST - $RAND_COLOR_FIRST + 1) + $RAND_COLOR_FIRST))
-        echo "38;05;$color_code"
-        ;;
-    esac
+    local numeric_hash=$(echo "$hostname" | cksum | cut -d' ' -f1)
+    local color_code=$(($numeric_hash % ($RAND_COLOR_LAST - $RAND_COLOR_FIRST + 1) + $RAND_COLOR_FIRST))
+    echo "38;05;$color_code"
 }
 
 C_HOST="\\[\033[01;$(__host_color "$(hostname)")m\\]"
