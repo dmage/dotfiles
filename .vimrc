@@ -7,7 +7,7 @@ let c_warn_trigraph = 1
 set viminfo='100,<50,s10,h
 set wildignore+=*/node_modules/*,*/bower_components/*
 
-map <C-S-F12> :!ctags -R --c++-kinds=+p --fields=+iaS --extra=+q .<CR>
+command Ctags :!ctags -R --exclude=*.min.* --exclude=*-min.* --c++-kinds=+p --fields=+iaS --extra=+q .
 
 " {{{ moving between windows
 nmap <silent> <M-Up> :wincmd k<CR>
@@ -40,6 +40,7 @@ Plugin 'altercation/vim-colors-solarized'
 Plugin 'ack.vim'
 Plugin 'ctrlp.vim'
 Plugin 'bling/vim-airline'
+Plugin 'majutsushi/tagbar'
 
 call vundle#end()
 filetype plugin indent on
