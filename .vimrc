@@ -46,6 +46,7 @@ Plugin 'majutsushi/tagbar'
 Plugin 'mhinz/vim-signify'
 Plugin 'tpope/vim-fugitive'
 Plugin 'scrooloose/syntastic'
+Plugin 'bronson/vim-trailing-whitespace'
 
 call vundle#end()
 filetype plugin indent on
