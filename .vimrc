@@ -11,6 +11,9 @@ command! Ctags :!ctags -R --exclude=*.min.* --exclude=*-min.* --c++-kinds=+p --f
 
 cmap w!! w !sudo tee % >/dev/null
 
+" bash-like tab completion
+set wildmode=longest,list
+
 " {{{ moving between windows
 nmap <silent> <M-Up> :wincmd k<CR>
 nmap <silent> <M-Down> :wincmd j<CR>
