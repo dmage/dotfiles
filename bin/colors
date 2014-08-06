@@ -40,8 +40,11 @@ echo
 echo '\033[1;3X;4Ym  0 - reset, 1 - bold, 3X - foreground, 4Y - background'
 echo
 
-for i in {30..37}; do
-    printf "%d \033[%dmhello world$RESET  1;%d \033[1;%dmhello world$RESET\n" $i $i $i $i
+NAMES=('--- black' '--R red' '-G- green' '-GR yellow' 'B-- blue' 'B-R magenta' 'BG- cyan' 'BGR white')
+for i in {0..7}; do
+    printf "%d \033[3%dmhello world$RESET  " $i $i
+    printf "1;%d \033[1;3%dmhello world$RESET  " $i $i
+    printf "%s\n" "${NAMES[$i]}"
 done
 printf "\n"
 
