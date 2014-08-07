@@ -12,6 +12,9 @@ ssh "$1" bash <<'END'
 set -x
 git --git-dir="$HOME/.cfgit" config remote.origin.url https://github.com/dmage/dotfiles
 git --git-dir="$HOME/.cfgit" --work-tree="$HOME" checkout --force
-git --git-dir="$HOME/.cfgit" --work-tree="$HOME" submodule init
-git --git-dir="$HOME/.cfgit" --work-tree="$HOME" submodule update
+cd "$HOME"  # submodule with --work-tree broken in git version 1.7.9.5
+git --git-dir="$HOME/.cfgit" config core.bare false
+git --git-dir="$HOME/.cfgit" submodule init
+git --git-dir="$HOME/.cfgit" submodule update
+git --git-dir="$HOME/.cfgit" config core.bare true
 END
