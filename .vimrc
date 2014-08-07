@@ -50,6 +50,7 @@ Plugin 'mhinz/vim-signify'
 Plugin 'tpope/vim-fugitive'
 Plugin 'scrooloose/syntastic'
 Plugin 'bronson/vim-trailing-whitespace'
+Plugin 'chrisbra/changesPlugin'
 
 call vundle#end()
 filetype plugin indent on
@@ -82,6 +83,10 @@ let g:airline_symbols.paste = 'ρ'
 let g:airline_symbols.paste = 'Þ'
 let g:airline_symbols.paste = '∥'
 let g:airline_symbols.whitespace = 'Ξ'
+" }}}
+
+" {{{ changesPlugin
+let g:changes_autocmd=1
 " }}}
 
 " {{{ autocmd vim
