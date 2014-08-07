@@ -21,7 +21,6 @@ PS1_SESSION='\D{%H:%M:%S} \h'
 PS1_PATH='\w'
 
 __host_color() {
-    local hostname=$1
     local numeric_hash
 
     if type -p ioreg >/dev/null ; then
@@ -29,13 +28,13 @@ __host_color() {
     elif type -p blkid >/dev/null ; then
         numeric_hash=$(blkid -s UUID -o value /dev/root | cksum | cut -d' ' -f1)
     else
-        numeric_hash=$(echo "$hostname" | cksum | cut -d' ' -f1)
+        numeric_hash=$(hostname | cksum | cut -d' ' -f1)
     fi
     local color_code=$(($numeric_hash % ($RAND_COLOR_LAST - $RAND_COLOR_FIRST + 1) + $RAND_COLOR_FIRST))
     echo "38;05;$color_code"
 }
 
-C_HOST="\\[\033[01;$(__host_color "$(hostname)")m\\]"
-C_PATH="\\[\033[01;34m\\]"
+C_HOST="\\[\033[1;$(__host_color)m\\]"
+C_PATH="\\[\033[1;34m\\]"
 C_RESET="\\[\033[00m\\]"
 export PS1="${C_HOST}$PS1_SESSION${C_PATH} $PS1_PATH$GIT_PS1\\\$${C_RESET} "
