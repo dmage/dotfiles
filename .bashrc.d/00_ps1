@@ -27,6 +27,8 @@ __host_color() {
         numeric_hash=$(ioreg -rd1 -c IOPlatformExpertDevice | sed -ne '/IOPlatformUUID/{s/.*= "\(.*\).*"/\1/p;q;}' | cksum | cut -d' ' -f1)
     elif type -p blkid >/dev/null ; then
         numeric_hash=$(blkid -s UUID -o value /dev/root | cksum | cut -d' ' -f1)
+    elif test -x /sbin/blkid ; then
+        numeric_hash=$(/sbin/blkid -s UUID -o value /dev/root | cksum | cut -d' ' -f1)
     else
         numeric_hash=$(hostname | cksum | cut -d' ' -f1)
     fi
