@@ -2,13 +2,16 @@
 rsync \
     -ave ssh \
     --exclude=COMMIT_EDITMSG \
-    --exclude=HEAD \
     --exclude=FETCH_HEAD \
     --exclude=ORIG_HEAD \
     --exclude=index \
+    --exclude=modules \
     --delete \
     "$HOME/.cfgit/" "$1:.cfgit/"
 ssh "$1" bash <<'END'
+set -x
 git --git-dir="$HOME/.cfgit" config remote.origin.url https://github.com/dmage/dotfiles
 git --git-dir="$HOME/.cfgit" --work-tree="$HOME" checkout --force
+git --git-dir="$HOME/.cfgit" --work-tree="$HOME" submodule init
+git --git-dir="$HOME/.cfgit" --work-tree="$HOME" submodule update
 END
