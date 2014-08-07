@@ -22,8 +22,15 @@ PS1_PATH='\w'
 
 __host_color() {
     local hostname=$1
+    local numeric_hash
 
-    local numeric_hash=$(echo "$hostname" | cksum | cut -d' ' -f1)
+    if type -p ioreg >/dev/null ; then
+        numeric_hash=$(ioreg -rd1 -c IOPlatformExpertDevice | sed -ne '/IOPlatformUUID/{s/.*= "\(.*\).*"/\1/p;q;}' | cksum | cut -d' ' -f1)
+    elif type -p blkid >/dev/null ; then
+        numeric_hash=$(blkid -s UUID -o value /dev/root | cksum | cut -d' ' -f1)
+    else
+        numeric_hash=$(echo "$hostname" | cksum | cut -d' ' -f1)
+    fi
     local color_code=$(($numeric_hash % ($RAND_COLOR_LAST - $RAND_COLOR_FIRST + 1) + $RAND_COLOR_FIRST))
     echo "38;05;$color_code"
 }
