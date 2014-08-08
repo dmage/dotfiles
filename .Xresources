@@ -1,0 +1,3 @@
+URxvt.perl-ext-common: default,matcher,tabbedex
+URxvt.keysym.C-T: perl:tabbedex:new_tab
+URxvt.font: -*-terminus-medium-*-*-*-14-*-*-*-*-*-iso10646-1
