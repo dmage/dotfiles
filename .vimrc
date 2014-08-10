@@ -57,7 +57,7 @@ filetype plugin indent on
 
 " {{{ colors
 set t_Co=16
-set background=dark
+set background=light
 let g:solarized_underline = 0
 colorscheme solarized
 " }}}
