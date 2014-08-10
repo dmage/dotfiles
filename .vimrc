@@ -42,6 +42,8 @@ call vundle#begin()
 Plugin 'gmarik/Vundle.vim'
 
 Plugin 'altercation/vim-colors-solarized'
+Plugin 'twilight'
+
 Plugin 'ack.vim'
 Plugin 'ctrlp.vim'
 Plugin 'bling/vim-airline'
@@ -56,15 +58,21 @@ filetype plugin indent on
 " }}}
 
 " {{{ colors
-set t_Co=16
-set background=light
-let g:solarized_underline = 0
-colorscheme solarized
+if $VIM_SOLARIZED == 1
+  set t_Co=16
+  set background=light
+  let g:solarized_underline = 0
+  colorscheme solarized
+  let g:airline_theme = 'solarized'
+else
+  set t_Co=256
+  colorscheme twilight
+  let g:airline_theme = 'murmur'
+endif
 " }}}
 
 " {{{ vim-airline
 set laststatus=2
-let g:airline_theme = 'solarized'
 
 if !exists('g:airline_symbols')
   let g:airline_symbols = {}

@@ -99,7 +99,7 @@ if query_tty; then
     set_color 15 "rgb:fd/f6/e3"
     #set_background "rgb:00/2b/36" # dark
     set_background "rgb:fd/f6/e3" # light
-    /usr/bin/vim "$@"
+    VIM_SOLARIZED=1 /usr/bin/vim "$@"
     ret=$?
     for i in {0..15}; do
         eval "set_color \$i \"\$color$i\""
