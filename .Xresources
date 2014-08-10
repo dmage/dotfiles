@@ -1,3 +1,4 @@
 URxvt.perl-ext-common: default,matcher,tabbedex,selection-ctx
 URxvt.keysym.C-T: perl:tabbedex:new_tab
-URxvt.font: -*-terminus-medium-*-*-*-14-*-*-*-*-*-iso10646-1
+URxvt.font: xft:Monospace:size=10
+URxvt.letterSpace: -1
