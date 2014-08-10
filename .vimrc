@@ -11,6 +11,8 @@ command! Ctags :!ctags -R --exclude=*.min.* --exclude=*-min.* --c++-kinds=+p --f
 
 cmap w!! w !sudo tee % >/dev/null
 
+:inoremap <lt>/ </<C-X><C-O>
+
 " bash-like tab completion
 set wildmode=longest,list
 
@@ -52,6 +54,7 @@ Plugin 'mhinz/vim-signify'
 Plugin 'tpope/vim-fugitive'
 Plugin 'scrooloose/syntastic'
 Plugin 'bronson/vim-trailing-whitespace'
+Plugin 'tpope/vim-endwise'
 
 call vundle#end()
 filetype plugin indent on
