@@ -67,6 +67,7 @@ if $VIM_SOLARIZED == 1
 else
   set t_Co=256
   colorscheme jellybeans
+  hi link xmlEndTag Function
   let g:airline_theme = 'bubblegum'
 endif
 " }}}
