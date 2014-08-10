@@ -42,7 +42,7 @@ call vundle#begin()
 Plugin 'gmarik/Vundle.vim'
 
 Plugin 'altercation/vim-colors-solarized'
-Plugin 'twilight256.vim'
+Plugin 'nanotech/jellybeans.vim'
 
 Plugin 'ack.vim'
 Plugin 'ctrlp.vim'
@@ -66,8 +66,8 @@ if $VIM_SOLARIZED == 1
   let g:airline_theme = 'solarized'
 else
   set t_Co=256
-  colorscheme twilight256
-  let g:airline_theme = 'murmur'
+  colorscheme jellybeans
+  let g:airline_theme = 'bubblegum'
 endif
 " }}}
 
