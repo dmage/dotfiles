@@ -1,4 +1,66 @@
 URxvt.perl-ext-common: default,matcher,tabbedex,selection-ctx
 URxvt.keysym.C-T: perl:tabbedex:new_tab
-URxvt.font: xft:Monospace:size=10
-URxvt.letterSpace: -1
+!URxvt.font: xft:Monospace:size=10
+!URxvt.letterSpace: -1
+URxvt.font: -*-terminus-medium-*-*-*-14-*-*-*-*-*-iso10646-1
+
+URxvt.scrollBar: false
+
+! molokai theme
+#define molokai_fg              #f8f8f0
+#define molokai_bg              #1b1d1e
+#define molokai_white           #ffffff
+#define molokai_red             #ff0000
+#define molokai_pink            #f92672
+#define molokai_orange          #fd971f
+#define molokai_yellow          #ffff00
+#define molokai_darkgoldenrod   #e6db74
+#define molokai_wheat           #c4be89
+#define molokai_olive           #808000
+#define molokai_chartreuse      #a6e22e
+#define molokai_lime            #00ff00
+#define molokai_green           #008000
+#define molokai_darkwine        #1e0010
+#define molokai_maroon          #800000
+#define molokai_wine            #960050
+#define molokai_teal            #008080
+#define molokai_aqua            #00ffff
+#define molokai_blue            #66d9ef
+#define molokai_slateblue       #7070f0
+#define molokai_purple          #ae81ff
+#define molokai_palevioletred   #d33682
+#define molokai_grey            #808080
+#define molokai_dark            #000000
+#define molokai_base01          #465457
+#define molokai_base02          #455354
+#define molokai_base03          #293739
+#define molokai_dodgerblue      #13354a
+
+URxvt.background : #0f0f0f
+URxvt.foreground : #bbbbbb
+
+URxvt.color0  : molokai_bg
+URxvt.color1  : #B60050
+URxvt.color2  : #88BB22
+URxvt.color3  : #C47F2C
+URxvt.color4  : #30309B
+URxvt.color5  : #7E40A5
+URxvt.color6  : #4699AF
+URxvt.color7  : #9999AA
+
+URxvt.color8  : #303030
+URxvt.color9  : #F92672
+URxvt.color10 : #80FF00
+URxvt.color11 : #FFBA68
+URxvt.color12 : #7070F0
+URxvt.color13 : #BB88DD
+URxvt.color14 : #66D9EF
+URxvt.color15 : #F8F8F2
+
+! #define Bold_Color #FFFFFF
+! #define Cursor_Color #BBBBBB
+! #define Cursor_Text_Color #FFFFFF
+! #define Selected_Text_Color #000000
+! #define Selection_Color #FFD5B5
+
+URxvt.tabbed.tab-bg : 2
