@@ -1,4 +1,5 @@
 #!/bin/bash
+set -efu -o pipefail
 
 # http://en.wikipedia.org/wiki/ANSI_escape_code
 ESC=$'\033'
@@ -19,11 +20,11 @@ query_color() {
     # urxvt: \033]4;rgb:RRRR/GGGG/BBBB\033
     # konsole: nothing
     local ret=1 esc data slash result
-    if read -r -N 1 -t 0.01 esc; then
+    if IFS= read -r -d '' -n 1 -t 1 esc; then
         if [[ "$esc" == $'\033' ]]; then
             IFS= read -r -d $'\033' -t 1 data
-            read -r -N 1 -t 0.01 slash
-            result=$(echo "$data" | sed -e "s/^]4;\($c;\)\?//")
+            IFS= read -r -d '' -n 1 -t 1 slash
+            result=$(echo "$data" | sed -e "s/^\]4;//;s/^$c;//")
             ret=0
             eval "color$c=\"$result\""
         fi
@@ -44,10 +45,10 @@ query_background() {
     # urxvt: \033]11;rgb:RRRR/GGGG/BBBB\033
     # konsole: nothing
     local ret=1 esc data slash result
-    if read -r -N 1 -t 0.01 esc; then
+    if IFS= read -r -d '' -n 1 -t 1 esc; then
         if [[ "$esc" == $'\033' ]]; then
             IFS= read -r -d $'\033' -t 1 data
-            read -r -N 1 -t 0.01 slash
+            IFS= read -r -d '' -n 1 -t 1 slash
             result=$(echo "$data" | sed -e "s/^]11;//")
             ret=0
             eval "background=\"$result\""
@@ -99,8 +100,8 @@ if query_tty; then
     set_color 15 "rgb:fd/f6/e3"
     #set_background "rgb:00/2b/36" # dark
     set_background "rgb:fd/f6/e3" # light
-    VIM_SOLARIZED=1 /usr/bin/vim "$@"
-    ret=$?
+    ret=0
+    VIM_SOLARIZED=1 /usr/bin/vim "$@" || ret=$?
     for i in {0..15}; do
         eval "set_color \$i \"\$color$i\""
     done
