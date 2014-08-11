@@ -1,0 +1,21 @@
+#!/bin/bash -eu
+eval homedir="$(printf "~%q" "$1")"
+sudo -i -u $1 rsync \
+    -ave ssh \
+    --exclude=COMMIT_EDITMSG \
+    --exclude=FETCH_HEAD \
+    --exclude=ORIG_HEAD \
+    --exclude=index \
+    --exclude=modules \
+    --delete \
+    "$HOME/.cfgit/" "$homedir/.cfgit/"
+sudo -i -u $1 bash <<'END'
+set -x
+git --git-dir="$HOME/.cfgit" config remote.origin.url https://github.com/dmage/dotfiles
+git --git-dir="$HOME/.cfgit" --work-tree="$HOME" checkout --force
+cd "$HOME"  # submodule with --work-tree broken in git version 1.7.9.5
+git --git-dir="$HOME/.cfgit" config core.bare false
+git --git-dir="$HOME/.cfgit" submodule init
+git --git-dir="$HOME/.cfgit" submodule update
+git --git-dir="$HOME/.cfgit" config core.bare true
+END
