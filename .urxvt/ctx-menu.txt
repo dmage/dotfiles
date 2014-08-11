@@ -1,9 +1,9 @@
 #
 # /regex/ "title goes here" exec|send|menu args go here
 
-MATCHALL "copy to clipboard" exec "echo \"$selection\" | xclip -selection clipboard -i"
+MATCHALL "copy to clipboard" exec "echo -n \"$selection\" | xclip -selection clipboard -i"
 MATCHALL "nmap $selection" send "nmap -sS -n -v -P0 $selection"
 http|ftp "wget $selection" send "wget --continue -v $selection"
 (\w\.\w):(\d+) "netcat $1:$2" send "nc -vv $1 $2"
 ----
-MATCHALL "open" exec "open $selection"
+MATCHALL "open" exec "xdg-open $selection"
