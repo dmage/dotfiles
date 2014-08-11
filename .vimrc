@@ -7,7 +7,7 @@ let c_warn_trigraph = 1
 set viminfo='100,<50,s10,h
 set wildignore+=*/node_modules/*,*/bower_components/*
 
-command! Ctags :!ctags -R --exclude=*.min.* --exclude=*-min.* --c++-kinds=+p --fields=+iaS --extra=+q .
+command! Ctags :!ctags -R --exclude=*.min.* --exclude=*-min.* --exclude=node_modules --c++-kinds=+p --fields=+iaS --extra=+q .
 
 cmap w!! w !sudo tee % >/dev/null
 
