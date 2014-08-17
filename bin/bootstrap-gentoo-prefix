@@ -1,0 +1,4 @@
+#!/bin/sh
+wget 'http://prefix.gentooexperimental.org/hg/prefix-tree/raw-file/default/scripts/bootstrap-prefix.sh' -O /tmp/bootstrap-prefix.sh
+chmod +x /tmp/bootstrap-prefix.sh
+/tmp/bootstrap-prefix.sh
