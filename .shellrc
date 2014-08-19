@@ -1,5 +1,5 @@
 # .shellrc
-export CDPATH=$HOME/^vcs
+export CDPATH=.:$HOME/^vcs:$HOME
 
 [[ -d ~/.shellrc.d ]] &&
     for f in ~/.shellrc.d/*; do
