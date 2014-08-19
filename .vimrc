@@ -4,7 +4,7 @@ set ts=4 sts=4 sw=4 et
 set termencoding=utf8
 set encoding=utf8
 let c_warn_trigraph = 1
-set viminfo='100,<50,s10,h
+set viminfo='100,<2000,s10,h
 set wildignore+=*/node_modules/*,*/bower_components/*
 
 command! Ctags :!ctags -R --exclude=*.min.* --exclude=*-min.* --exclude=node_modules --c++-kinds=+p --fields=+iaS --extra=+q .
@@ -104,3 +104,4 @@ aug AutoloadVimrc
   au BufWritePost .vimrc runtime! plugins/**/*.vim
 aug END
 " }}}
+set viminfo='100,<2000,s10,h
