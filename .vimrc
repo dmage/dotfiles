@@ -54,6 +54,7 @@ Plugin 'tpope/vim-fugitive'
 Plugin 'scrooloose/syntastic'
 Plugin 'bronson/vim-trailing-whitespace'
 Plugin 'tpope/vim-endwise'
+Plugin 'leafgarland/typescript-vim'
 
 call vundle#end()
 filetype plugin indent on
@@ -97,6 +98,7 @@ let g:airline_symbols.whitespace = 'Ξ'
 
 " {{{ autocmd vim
 au FileType vim setl et ts=2 sts=2 sw=2 foldmethod=marker
+au FileType yaml setl et ts=2 sts=2 sw=2
 
 aug AutoloadVimrc
   au!
