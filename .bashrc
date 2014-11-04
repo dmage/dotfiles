@@ -4,8 +4,12 @@ if [[ $- != *i* ]] ; then
     return
 fi
 
+#Ubuntu#
 [[ -f /etc/bash_completion ]] &&
     . /etc/bash_completion
+#Gentoo#
+[[ -f /etc/profile.d/bash-completion.sh ]] &&
+    . /etc/profile.d/bash-completion.sh
 
 if type -p dircolors >/dev/null ; then
     if [[ -f ~/.dir_colors ]] ; then
