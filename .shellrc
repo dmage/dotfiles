@@ -1,5 +1,5 @@
 # .shellrc
-export CDPATH=.:$HOME/^vcs:$HOME
+export CDPATH=.:$HOME/src/dmage.private:$HOME
 
 [[ -d ~/.shellrc.d ]] &&
     for f in ~/.shellrc.d/*; do
