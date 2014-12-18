@@ -55,6 +55,9 @@ Plugin 'scrooloose/syntastic'
 Plugin 'bronson/vim-trailing-whitespace'
 Plugin 'tpope/vim-endwise'
 Plugin 'leafgarland/typescript-vim'
+Plugin 'ciaranm/securemodelines'
+
+Plugin 'nginx/nginx', {'name': 'nginx-syntax', 'rtp': 'contrib/vim'}
 
 call vundle#end()
 filetype plugin indent on
@@ -96,6 +99,24 @@ let g:airline_symbols.paste = '∥'
 let g:airline_symbols.whitespace = 'Ξ'
 " }}}
 
+" {{{ securemodelines
+set modelines=0
+let g:secure_modelines_allowed_items = [
+      \ "textwidth",   "tw",
+      \ "softtabstop", "sts",
+      \ "tabstop",     "ts",
+      \ "shiftwidth",  "sw",
+      \ "expandtab",   "et",   "noexpandtab", "noet",
+      \ "filetype",    "ft",
+      \ "foldmethod",  "fdm",
+      \ "readonly",    "ro",   "noreadonly", "noro",
+      \ "backup",      "bkp",  "nobackup", "nobkp",
+      \ "autoindent",  "ai",   "noautoindent", "noai",
+      \ "shiftround",  "sr",   "noshiftround", "nosr",
+      \ "syntax",      "syn"
+      \ ]
+" }}}
+
 " {{{ autocmd vim
 au FileType vim setl et ts=2 sts=2 sw=2 foldmethod=marker
 au FileType yaml setl et ts=2 sts=2 sw=2
@@ -106,4 +127,3 @@ aug AutoloadVimrc
   au BufWritePost .vimrc runtime! plugins/**/*.vim
 aug END
 " }}}
-set viminfo='100,<2000,s10,h
