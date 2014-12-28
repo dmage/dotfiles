@@ -10,6 +10,9 @@ fi
 #Gentoo#
 [[ -f /etc/profile.d/bash-completion.sh ]] &&
     . /etc/profile.d/bash-completion.sh
+complete -d -o bashdefault -o default -o nospace cd
+complete -fd -o bashdefault -o default cp
+complete -fd -o bashdefault -o default mv
 
 if type -p dircolors >/dev/null ; then
     if [[ -f ~/.dir_colors ]] ; then

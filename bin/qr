@@ -1,0 +1,3 @@
+#!/bin/bash
+read -s -r -p "Text for QR code: " x && echo
+qrencode -o - "$x" | display /dev/stdin
