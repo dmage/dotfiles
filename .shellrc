@@ -1,7 +1,19 @@
 # .shellrc
-export CDPATH=.:$HOME/src/dmage.private:$HOME/src/github.com/dmage:$HOME
+export PATH="$HOME/bin:$PATH"
+CDPATH=".:$HOME/src/github.com/dmage"
 
-[[ -d ~/.shellrc.d ]] &&
-    for f in ~/.shellrc.d/*; do
-        . $f
-    done
+# golang
+export GOPATH="$HOME/.go"
+export PATH="$GOPATH/bin:$PATH"
+
+cover() {
+    t="/tmp/go-cover.$$.tmp"
+    go test -coverprofile="$t" "$@" && go tool cover -html="$t" && rm "$t"
+}
+
+# fix $TERM in tmux
+[ -n "$TMUX" ] && export TERM=screen-256color
+
+# source other files
+[ -f ~/.shell_aliases ] && . ~/.shell_aliases
+[ -f ~/.shellrc.local ] && . ~/.shellrc.local
