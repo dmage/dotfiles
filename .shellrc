@@ -3,7 +3,7 @@ export PATH="$HOME/bin:$PATH"
 CDPATH=".:$HOME/src/github.com/dmage"
 
 # golang
-export GOPATH="$HOME/.go"
+export GOPATH="$HOME"
 export PATH="$GOPATH/bin:$PATH"
 
 cover() {
