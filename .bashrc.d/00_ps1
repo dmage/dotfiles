@@ -1,6 +1,6 @@
 GIT_PS1=''
-if [ -r "$HOME/.homebrew/etc/bash_completion.d/git-prompt.sh" ]; then
-    . "$HOME/.homebrew/etc/bash_completion.d/git-prompt.sh"
+if [ -r "/usr/local/etc/bash_completion.d/git-prompt.sh" ]; then
+    . "/usr/local/etc/bash_completion.d/git-prompt.sh"
     GIT_PS1='$(__git_ps1)'
 elif [ -r /opt/local/share/git-core/contrib/completion/git-prompt.sh ]; then
     . /opt/local/share/git-core/contrib/completion/git-prompt.sh
@@ -10,8 +10,8 @@ elif [ -r /opt/local/share/doc/git-core/contrib/completion/git-completion.bash ]
     GIT_PS1='$(__git_ps1)'
 fi
 
-if [ -r "$HOME/.homebrew/etc/bash_completion.d/git-completion.bash" ]; then
-    . "$HOME/.homebrew/etc/bash_completion.d/git-completion.bash"
+if [ -r "/usr/local/etc/bash_completion.d/git-completion.bash" ]; then
+    . "/usr/local/etc/bash_completion.d/git-completion.bash"
 fi
 
 RAND_COLOR_FIRST=17
