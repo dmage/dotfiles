@@ -1,0 +1,24 @@
+#!/bin/sh -efu
+JQ=jq
+RSYNC=rsync
+CONFIG_NAME=.remote-sync.json
+
+$JQ -V >/dev/null || exit 2
+
+PROJECT_ROOT=.
+while [ ! -e "$PROJECT_ROOT/$CONFIG_NAME" -a ! "$PROJECT_ROOT" -ef "$PROJECT_ROOT/.." ]; do
+    PROJECT_ROOT="$PROJECT_ROOT/.."
+done
+if [ ! -e "$PROJECT_ROOT/$CONFIG_NAME" ]; then
+    echo "$0: $CONFIG_NAME not found" >&2
+    exit 1
+fi
+
+CONFIG="$PROJECT_ROOT/$CONFIG_NAME"
+
+HOSTNAME=$(jq -r .hostname <"$CONFIG")
+TARGET=$(jq -r .target <"$CONFIG")
+USERNAME=$(jq -r .username <"$CONFIG")
+EXCLUDE=$(jq -r '.ignore[] | "--exclude=\(.)"' <"$CONFIG")
+
+$RSYNC -av --exclude=$CONFIG_NAME $EXCLUDE -e ssh "$PROJECT_ROOT/" "$USERNAME@$HOSTNAME:$TARGET/" "$@"
