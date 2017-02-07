@@ -21,4 +21,4 @@ TARGET=$(jq -r .target <"$CONFIG")
 USERNAME=$(jq -r .username <"$CONFIG")
 EXCLUDE=$(jq -r '.ignore[] | "--exclude=\(.)"' <"$CONFIG")
 
-$RSYNC -av --exclude=$CONFIG_NAME $EXCLUDE -e ssh "$PROJECT_ROOT/" "$USERNAME@$HOSTNAME:$TARGET/" "$@"
+$RSYNC -rlpgoD --exclude=$CONFIG_NAME $EXCLUDE -e ssh "$PROJECT_ROOT/" "$USERNAME@$HOSTNAME:$TARGET/" "$@"
