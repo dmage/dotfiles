@@ -44,8 +44,8 @@ esac
 [[ -f ~/.shellrc ]] &&
     . ~/.shellrc
 
-[[ -f ~/.perlbrew/etc/bashrc ]] &&
-    . ~/.perlbrew/etc/bashrc
+[[ -f ~/perl5/perlbrew/etc/bashrc ]] &&
+    . ~/perl5/perlbrew/etc/bashrc
 
 [[ -d ~/.bashrc.d ]] &&
     for f in ~/.bashrc.d/*; do

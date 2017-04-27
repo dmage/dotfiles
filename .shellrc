@@ -7,8 +7,46 @@ export GOPATH="$HOME"
 export PATH="$GOPATH/bin:$PATH"
 
 cover() {
-    t="/tmp/go-cover.$$.tmp"
+    local t="/tmp/go-cover.$$.tmp"
     go test -coverprofile="$t" "$@" && go tool cover -html="$t" && rm "$t"
+}
+
+goenv() {
+    local version=$1
+    shift
+    local goversion=$(cd "$HOME/goroot"; echo go$version*)
+    if [ -e "$HOME/goroot/$goversion" ]; then
+        env GOROOT="$HOME/goroot/$goversion" PATH="$HOME/goroot/$goversion/bin:$PATH" "$@"
+    elif [ "$goversion" == "go$version*" ]; then
+        echo "goenv: $version: no such version" >&2
+        return 1
+    else
+        echo "goenv: $version: ambiguous version: $goversion" >&2
+        return 1
+    fi
+}
+
+gocd() {
+    cd "$GOPATH/src/$@"
+}
+
+# openshift origin
+obuild() {
+    make build || return $?
+    OS_RELEASE=n ./hack/build-images.sh
+}
+oinit() {
+    if which -s oc ; then
+        return
+    fi
+
+    local bindir="$PWD/_output/local/bin/$(go env GOHOSTOS)/$(go env GOHOSTARCH)"
+    if [ ! -x "$bindir/oc" ]; then
+        echo "$bindir/oc: not found. Did you forget `make build` or `obuild`?" >&2
+        return 1
+    fi
+
+    export PATH="$bindir:$PATH"
 }
 
 # fix $TERM in tmux

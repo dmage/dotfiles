@@ -58,6 +58,7 @@ Plugin 'bronson/vim-trailing-whitespace'
 Plugin 'tpope/vim-endwise'
 Plugin 'leafgarland/typescript-vim'
 Plugin 'ciaranm/securemodelines'
+Plugin 'fatih/vim-go'
 
 Plugin 'nginx/nginx', {'name': 'nginx-syntax', 'rtp': 'contrib/vim'}
 
