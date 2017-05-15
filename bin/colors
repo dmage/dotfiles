@@ -4,12 +4,12 @@ RESET="\033[0m"
 
 color1() {
     local color_code=$1
-    printf " \033[38;05;%03dm%03d$RESET" $color_code $color_code
+    printf " \033[38;5;%dm%03d$RESET" $color_code $color_code
 }
 
 color2() {
     local color_code=$1
-    printf " \033[38;05;%03dm%s$RESET" $color_code "███"
+    printf " \033[38;5;%dm%s$RESET" $color_code "███"
 }
 
 block() {
@@ -42,11 +42,15 @@ echo
 
 NAMES=('--- black' '--R red' '-G- green' '-GR yellow' 'B-- blue' 'B-R magenta' 'BG- cyan' 'BGR white')
 for i in {0..7}; do
-    printf "%d \033[3%dmhello world$RESET  " $i $i
-    printf "1;%d \033[1;3%dmhello world$RESET  " $i $i
+    printf "3%d \033[3%dmhello world$RESET  " $i $i
+    printf "1;3%d \033[1;3%dmhello world$RESET  " $i $i
     printf "%s\n" "${NAMES[$i]}"
 done
 printf "\n"
+
+echo
+echo '\033[38;5;NUMm  NUM - foreground color [0..255]'
+echo
 
 block 0 8 2 1
 printf "\n"
