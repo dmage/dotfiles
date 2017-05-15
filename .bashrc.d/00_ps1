@@ -1,11 +1,16 @@
 GIT_PS1=''
+#macOS#
 if [ -r "/usr/local/etc/bash_completion.d/git-prompt.sh" ]; then
     . "/usr/local/etc/bash_completion.d/git-prompt.sh"
     GIT_PS1='$(__git_ps1)'
 fi
-
 if [ -r "/usr/local/etc/bash_completion.d/git-completion.bash" ]; then
     . "/usr/local/etc/bash_completion.d/git-completion.bash"
+fi
+#Gentoo#
+if [ -r "/usr/share/git/git-prompt.sh" ]; then
+    . "/usr/share/git/git-prompt.sh"
+    GIT_PS1='$(__git_ps1)'
 fi
 
 RAND_COLOR_FIRST=17
