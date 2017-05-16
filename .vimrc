@@ -7,6 +7,7 @@ let c_warn_trigraph = 1
 set viminfo='100,<2000,s10,h
 set wildignore+=*/node_modules/*,*/bower_components/*
 set bs=indent,eol,start
+set mouse=n
 
 command! Ctags :!ctags -R --exclude=*.min.* --exclude=*-min.* --exclude=node_modules --c++-kinds=+p --fields=+iaS --extra=+q .
 
