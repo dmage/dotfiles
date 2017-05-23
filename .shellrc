@@ -31,22 +31,127 @@ gocd() {
 }
 
 # openshift origin
-obuild() {
-    make build || return $?
-    OS_RELEASE=n ./hack/build-images.sh
-}
-oinit() {
-    if which -s oc ; then
+_OS_VARDIR=/var/lib/origin
+os-init() {
+    if which oc >/dev/null 2>&1; then
         return
     fi
 
-    local bindir="$PWD/_output/local/bin/$(go env GOHOSTOS)/$(go env GOHOSTARCH)"
+    local bindir=$(os-bin-path)
     if [ ! -x "$bindir/oc" ]; then
-        echo "$bindir/oc: not found. Did you forget `make build` or `obuild`?" >&2
+        echo "$bindir/oc: not found. Did you forget \`make build\` or \`obuild\`?" >&2
         return 1
     fi
 
     export PATH="$bindir:$PATH"
+}
+os-bin-path() {
+    echo "$PWD/_output/local/bin/$(go env GOHOSTOS)/$(go env GOHOSTARCH)"
+}
+os-start() {
+    os-init
+    local openshift
+    if ! openshift=$(which openshift); then
+        echo "os-start: failed to find openshift binary" >&2
+        return 1
+    fi
+    local configdir="$_OS_VARDIR/openshift.local.config"
+    sudo "$openshift" start --write-config=$configdir
+    sudo chmod +r "$configdir/master/admin.kubeconfig"
+    cp "$configdir/master/admin.kubeconfig" "$HOME/.kube/config"
+    sudo "$openshift" start --latest-images=true --master-config="$configdir/master/master-config.yaml" --node-config="$configdir/node-localhost/node-config.yaml" "$@"
+}
+os-create-defaults() {
+    oc login -u developer -p developer
+    oc new-project myproject
+}
+
+obuild() {
+    make build || return $?
+    OS_RELEASE=n ./hack/build-images.sh
+}
+oup() {
+    os-init
+    oc cluster up --version=latest "$@"
+}
+odown() {
+    os-init
+    oc cluster down
+    mount | grep openshift.local.volumes | cut -d' ' -f3 | xargs -r sudo umount
+    sudo rm -rf /var/lib/origin/openshift.local.volumes/
+}
+
+_OS_USER=
+os-switch-to-admin() {
+    if [ -n "$_OS_USER" ]; then
+        echo "os-switch-to-admin: you are aready switched to system:admin from $_OS_USER. Use \`os-return-from-admin\` to switch back" >&2
+        return 1
+    fi
+    _OS_USER=$(oc whoami)
+    if [ "$_OS_USER" != "system:admin" ]; then
+        oc login -u system:admin
+    fi
+}
+os-return-from-admin() {
+    if [ -z "$_OS_USER" ]; then
+        echo "os-return-from-admin: you have not used \`os-switch-to-admin\`" >&2
+        return 1
+    fi
+    if [ "$_OS_USER" != "system:admin" ]; then
+        oc login -u "$_OS_USER"
+    fi
+    _OS_USER=
+}
+
+os-registry-enable-metrics() {
+    os-switch-to-admin
+    oc patch -n default dc docker-registry -p '{"spec": {"template": {"spec": {"containers": [{
+      "name": "registry",
+      "env": [
+        {"name": "REGISTRY_OPENSHIFT_METRICS_ENABLED", "value": "true"},
+        {"name": "REGISTRY_OPENSHIFT_METRICS_SECRET", "value": "mysecret"}
+      ]
+    }]}}}}'
+    oc rollout status -n default dc/docker-registry
+    os-return-from-admin
+}
+os-registry-logs() {
+    os-switch-to-admin >/dev/null
+    oc logs -n default dc/docker-registry
+    os-return-from-admin >/dev/null
+}
+os-registry-build() {
+    ./hack/build-go.sh cmd/dockerregistry
+    cp "$(os-bin-path)/dockerregistry" ./images/dockerregistry/bin
+    md5sum ./images/dockerregistry/bin/*
+    docker build -t openshift/origin-docker-registry:latest ./images/dockerregistry
+    git clean -fdx ./images/dockerregistry
+}
+os-registry-redeploy() {
+    os-registry-build
+    os-switch-to-admin
+    oc patch -n default dc docker-registry -p '{"spec": {"template": {"spec": {"containers": [{
+      "name": "registry",
+      "imagePullPolicy": "Never"
+    }]}}}}'
+    oc rollout latest -n default dc/docker-registry
+    oc rollout status -n default dc/docker-registry
+    os-return-from-admin
+}
+os-registry-test() {
+    local origin=github.com/openshift/origin
+    go test $origin/cmd/dockerregistry/... $origin/pkg/cmd/dockerregistry/... $origin/pkg/dockerregistry/...
+}
+
+oc-default() {
+    os-switch-to-admin >/dev/null
+    oc -n default "$@"
+    os-return-from-admin >/dev/null
+}
+kubectl-default() {
+    os-switch-to-admin >/dev/null
+    kubectl -n default "$@"
+    os-return-from-admin >/dev/null
 }
 
 # fix $TERM in tmux
