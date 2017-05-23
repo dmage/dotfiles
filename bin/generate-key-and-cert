@@ -1,0 +1,16 @@
+#!/bin/sh
+
+out=$1
+[ -n "$out" ] || {
+    echo "usage: $0 outdir" >&2
+    exit 1
+}
+
+mkdir -p "$out" || exit 1
+
+# Generate a public/private key pair
+openssl genrsa -out "$out/key.pem" 1024
+chmod 400 "$out/key.pem"
+
+# Generate a self signed certificate
+openssl req -new -x509 -key "$out/key.pem" -days 365 -out "$out/cert.pem"
