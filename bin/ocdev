@@ -1,0 +1,159 @@
+#!/bin/bash -efu
+
+: ${OCDEV_VARDIR:=$HOME/.ocdev}
+
+PROGNAME=$(basename "$0")
+
+usage() {
+    echo "usage: $PROGNAME <command>"
+    echo
+    echo "Available commands:"
+    echo "  find-bin  Find the directory with OpenShift binaries"
+    echo "  env       Print adjusted environment variables"
+    echo "  start     Start an all-in-one server"
+    echo "  destroy   Remove config files, etcd data, volumes, etc"
+    echo
+    echo "ocdev registry-build"
+    echo "ocdev start --loglevel=4"
+    echo "ocdev registry-start"
+    echo
+    echo "ocdev registry-redeploy"
+}
+
+fatal() {
+    echo "$PROGNAME: $*" >&2
+    exit 1
+}
+
+ocdev-find-basedir() {
+    local p="_output/local/bin/$(go env GOHOSTOS)/$(go env GOHOSTARCH)"
+    local d="$PWD"
+    while true; do
+        if [ -x "$d/$p/oc" ]; then
+            echo "$d"
+            return 0
+        fi
+
+        [ "$d" != "${d%/*}" ] || break
+        d="${d%/*}"
+    done
+
+    fatal "find-output: no $p found"
+}
+
+ocdev-find-bin() {
+    local basedir
+    basedir=$(ocdev-find-basedir)
+    echo "$basedir/_output/local/bin/$(go env GOHOSTOS)/$(go env GOHOSTARCH)"
+}
+
+ocdev-env() {
+    if ! which oc >/dev/null 2>&1; then
+        local bindir
+        if ! bindir=$(ocdev-find-bin); then
+            return 1
+        fi
+        PATH="$bindir:$PATH"
+    fi
+
+    printf "export PATH=%q\n" "$PATH"
+}
+
+ocdev-start() {
+    eval "$(ocdev-env)"
+
+    local openshift
+    if ! openshift=$(which openshift); then
+        fatal "find-output: failed to find openshift binary"
+    fi
+
+    local configdir="$OCDEV_VARDIR/openshift.local.config"
+    local etcddir="$OCDEV_VARDIR/openshift.local.etcd"
+    local volumedir="$OCDEV_VARDIR/openshift.local.volumes"
+
+    "$openshift" start --write-config="$configdir" --etcd-dir="$etcddir" --volume-dir="$volumedir"
+    sudo chmod +r "$configdir/master/admin.kubeconfig"
+    cp "$configdir/master/admin.kubeconfig" "$HOME/.kube/config"
+
+    sudo "$openshift" start \
+        --latest-images=true \
+        --master-config="$configdir/master/master-config.yaml" \
+        --node-config="$configdir/node-localhost/node-config.yaml" \
+        "$@"
+}
+
+ocdev-registry-build() {
+    local basedir
+    basedir=$(ocdev-find-basedir)
+    cd "$basedir"
+    ./hack/build-go.sh cmd/dockerregistry
+
+    local bindir
+    bindir=$(ocdev-find-bin)
+    docker build -q -t ocdev-registry - <<END
+FROM fedora
+USER 1001
+EXPOSE 5000
+ENV REGISTRY_CONFIGURATION_PATH=/openshift/images/dockerregistry/config.yml
+VOLUME /registry
+VOLUME /openshift/bin
+CMD /openshift/bin/dockerregistry
+END
+}
+
+ocdev-registry-start() {
+    local bindir
+    bindir=$(ocdev-find-bin)
+    imagesdir="$(ocdev-find-basedir)/images"
+    oadm registry -o json |
+        jq --arg bindir "$bindir" --arg imagesdir "$imagesdir" '
+            path(.items[] | select(.kind == "Service" and .metadata.name == "docker-registry")) as $svc |
+            setpath($svc + ["spec", "clusterIP"]; "172.30.1.1") |
+
+            path(.items[] | select(.kind == "DeploymentConfig" and .metadata.name == "docker-registry")) as $dc |
+            ($dc + ["spec", "template", "spec", "volumes"]) as $volumes |
+            setpath($volumes; getpath($volumes) + [{
+                "name": "openshift-bin",
+                "hostPath": {
+                    "path": $bindir
+                }
+            }, {
+                "name": "openshift-images",
+                "hostPath": {
+                    "path": $imagesdir
+                }
+            }]) |
+
+            path(.items[] | select(.kind == "DeploymentConfig" and .metadata.name == "docker-registry") | .spec.template.spec.containers[] | select(.name == "registry")) as $container |
+            setpath($container + ["image"]; "ocdev-registry:latest") |
+            setpath($container + ["imagePullPolicy"]; "Never") |
+            setpath($container + ["volumeMounts"]; getpath($container + ["volumeMounts"]) + [{
+                "name": "openshift-bin",
+                "mountPath": "/openshift/bin"
+            }, {
+                "name": "openshift-images",
+                "mountPath": "/openshift/images"
+            }])
+        ' |
+        oc create -f -
+    oadm policy add-scc-to-user hostaccess -z registry
+}
+
+ocdev-registry-redeploy() {
+    ocdev-registry-build
+    oc rollout latest dc/docker-registry || true
+    oc rollout status dc/docker-registry
+}
+
+ocdev-destroy() {
+    mount | grep -F "$OCDEV_VARDIR/openshift.local.volumes" | cut -d' ' -f3 | xargs -r sudo umount
+    sudo rm -rf "$OCDEV_VARDIR"
+}
+
+[ $# -ge 1 ] || { usage >&2; exit 1; }
+if declare -f "ocdev-$1" >/dev/null || test -x "ocdev-$1"; then
+	"ocdev-$@"
+else
+	usage >&2
+	exit 1
+fi
