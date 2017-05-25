@@ -9,15 +9,19 @@ usage() {
     echo "usage: $PROGNAME <command>"
     echo
     echo "Available commands:"
-    echo "  show-toplevel  Show the absolute path of the top-level directory"
-    echo "  show-bindir    Show the absolute path of the directory with OpenShift binaries"
-    echo "  env            Show adjusted environment variables"
-    echo "  build-all      Build openshift, oc, and dockerregistry"
-    echo "  destroy        Remove generated config files, etcd data, volumes, etc"
+    echo "  show-toplevel    Show the absolute path of the top-level directory"
+    echo "  show-bindir      Show the absolute path of the directory with OpenShift binaries"
+    echo "  env              Show adjusted environment variables"
+    echo "  oc               Run oc from the current source tree"
+    echo "  ocdefault        Run oc command as the system:admin user in the default namespace"
+    echo "  build-all        Build openshift, oc, and dockerregistry"
+    echo "  build-pod-image  Build openshift/origin-pod:latest Docker image"
+    echo "  create-defaults  Create the user 'developer' and the project 'myproject'"
+    echo "  destroy          Remove generated config files, etcd data, volumes, etc"
     echo
     echo "OpenShift:"
-    echo "  build          Build openshift and oc binaries"
-    echo "  start          Start the all-in-one OpenShift server in the foreground"
+    echo "  build            Build openshift and oc binaries"
+    echo "  start            Start the all-in-one OpenShift server in the foreground"
     echo
     echo "Commands for the registry:"
     echo "  build-registry-image  Build the ocdev-registry:latest Docker image"
@@ -35,7 +39,7 @@ usage() {
 }
 
 fatal() {
-    echo "$PROGNAME: $*" >&2
+    printf "%s: %s\n" "$PROGNAME" "$*" >&2
     exit 1
 }
 
@@ -45,6 +49,19 @@ cd_toplevel() {
     cd "$toplevel"
 }
 
+add_bindir_to_path() {
+    export OCDEV_BINDIR="$PWD/_output/local/bin/$(go env GOHOSTOS)/$(go env GOHOSTARCH)"
+
+    local oc=$(which oc 2>/dev/null)
+    if [ "$oc" != "$OCDEV_BINDIR/oc" ]; then
+        PATH="$OCDEV_BINDIR:$PATH"
+    fi
+}
+
+ocdefault() {
+    oc --context=$(kubectl config current-context | sed -e 's,^[^/]*,default,' -e 's,[^/]*$,system:admin,') "$@"
+}
+
 # {{{ ocdev
 
 ocdev-show-toplevel() {
@@ -52,16 +69,19 @@ ocdev-show-toplevel() {
 }
 
 ocdev-show-bindir() {
-    echo "$PWD/_output/local/bin/$(go env GOHOSTOS)/$(go env GOHOSTARCH)"
+    echo "$OCDEV_BINDIR"
 }
 
 ocdev-env() {
-    local bindir=$(ocdev-show-bindir) oc=$(which oc 2>/dev/null)
-    if [ "$oc" != "$bindir/oc" ]; then
-        PATH="$bindir:$PATH"
-    fi
-
     printf "export PATH=%q\n" "$PATH"
+}
+
+ocdev-oc() {
+    oc "$@"
+}
+
+ocdev-ocdefault() {
+    ocdefault "$@"
 }
 
 ocdev-build-all() {
@@ -72,9 +92,14 @@ ocdev-build-all() {
 
 ocdev-build-pod-image() {
     ./hack/build-go.sh images/pod
-    cp "$(ocdev-show-bindir)/pod" ./images/pod/bin/pod
+    cp "$OCDEV_BINDIR/pod" ./images/pod/bin/pod
     docker build -t openshift/origin-pod:latest ./images/pod
     rm ./images/pod/bin/pod
+}
+
+ocdev-create-defaults() {
+    oc login -u developer -p developer
+    oc new-project myproject
 }
 
 ocdev-destroy() {
@@ -91,8 +116,6 @@ ocdev-build() {
 }
 
 ocdev-start() {
-    eval "$(ocdev-env)"
-
     local openshift
     if ! openshift=$(which openshift); then
         fatal "start: failed to find openshift binary"
@@ -137,8 +160,7 @@ ocdev-build-registry() {
 }
 
 ocdev-start-registry() {
-    local toplevel="$(ocdev-show-toplevel)" bindir="$(ocdev-show-bindir)"
-    local imagesdir="$toplevel/images"
+    local bindir="$OCDEV_BINDIR" imagesdir="$PWD/images"
     oadm registry -o json |
         jq --arg bindir "$bindir" --arg imagesdir "$imagesdir" '
             path(.items[] | select(.kind == "Service" and .metadata.name == "docker-registry")) as $svc |
@@ -169,13 +191,17 @@ ocdev-start-registry() {
                 "mountPath": "/openshift/images"
             }])
         ' |
-        oc create -f -
+        ocdefault create -f -
     oadm policy add-scc-to-user hostaccess -z registry
 }
 
 ocdev-rollout-registry() {
-    oc rollout latest dc/docker-registry || true
-    oc rollout status dc/docker-registry
+    ocdefault rollout latest dc/docker-registry || true
+    ocdefault rollout status dc/docker-registry
+}
+
+ocdev-logs-registry() {
+    ocdefault logs dc/docker-registry "$@"
 }
 
 ocdev-update-registry() {
@@ -186,6 +212,8 @@ ocdev-update-registry() {
 # }}}
 
 cd_toplevel
+add_bindir_to_path
+
 [ $# -ge 1 ] || { usage >&2; exit 1; }
 if declare -f "ocdev-$1" >/dev/null || test -x "ocdev-$1"; then
     "ocdev-$@"
