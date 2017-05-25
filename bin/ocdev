@@ -143,11 +143,12 @@ ocdev-start() {
 # {{{ registry
 
 ocdev-build-registry-image() {
-    docker build -t ocdev-registry - <<END
+    docker build -t ocdev-registry - <<'END'
 FROM fedora
 USER 1001
 EXPOSE 5000
 ENV REGISTRY_CONFIGURATION_PATH=/openshift/images/dockerregistry/config.yml
+ENV DOCKER_REGISTRY_URL=${DOCKER_REGISTRY_SERVICE_HOST}:${DOCKER_REGISTRY_SERVICE_PORT}
 VOLUME /registry
 VOLUME /openshift/bin
 CMD /openshift/bin/dockerregistry
@@ -161,7 +162,7 @@ ocdev-build-registry() {
 
 ocdev-start-registry() {
     local bindir="$OCDEV_BINDIR" imagesdir="$PWD/images"
-    oadm registry -o json |
+    ocdefault adm registry -o json |
         jq --arg bindir "$bindir" --arg imagesdir "$imagesdir" '
             path(.items[] | select(.kind == "Service" and .metadata.name == "docker-registry")) as $svc |
             setpath($svc + ["spec", "clusterIP"]; "172.30.1.1") |
