@@ -1,6 +1,7 @@
 #!/bin/bash -efu
+# vim:set foldmethod=marker:
 
-: ${OCDEV_VARDIR:=$HOME/.ocdev}
+OCDEV_VARDIR=${OCDEV_VARDIR:=$HOME/.ocdev}
 
 PROGNAME=$(basename "$0")
 
@@ -8,16 +9,29 @@ usage() {
     echo "usage: $PROGNAME <command>"
     echo
     echo "Available commands:"
-    echo "  find-bin  Find the directory with OpenShift binaries"
-    echo "  env       Print adjusted environment variables"
-    echo "  start     Start an all-in-one server"
-    echo "  destroy   Remove config files, etcd data, volumes, etc"
+    echo "  show-toplevel  Show the absolute path of the top-level directory"
+    echo "  show-bindir    Show the absolute path of the directory with OpenShift binaries"
+    echo "  env            Show adjusted environment variables"
+    echo "  build-all      Build openshift, oc, and dockerregistry"
+    echo "  destroy        Remove generated config files, etcd data, volumes, etc"
     echo
-    echo "ocdev registry-build"
-    echo "ocdev start --loglevel=4"
-    echo "ocdev registry-start"
+    echo "OpenShift:"
+    echo "  build          Build openshift and oc binaries"
+    echo "  start          Start the all-in-one OpenShift server in the foreground"
     echo
-    echo "ocdev registry-redeploy"
+    echo "Commands for the registry:"
+    echo "  build-registry-image  Build the ocdev-registry:latest Docker image"
+    echo "  build-registry        Build the dockerregistry binary"
+    echo "  start-registry        Create Service and DeploymentConfig for the registry"
+    echo "  rollout-registry      Redeploy the registry"
+    echo "  update-registry       Rebuild and redeploy the registry"
+    echo
+    echo "Usage examples:"
+    echo "  ocdev build-all"
+    echo "  ocdev start --loglevel=4"
+    echo "  ocdev start-registry"
+    echo
+    echo "  ocdev update-registry"
 }
 
 fatal() {
@@ -25,38 +39,55 @@ fatal() {
     exit 1
 }
 
-ocdev-find-basedir() {
-    local p="_output/local/bin/$(go env GOHOSTOS)/$(go env GOHOSTARCH)"
-    local d="$PWD"
-    while true; do
-        if [ -x "$d/$p/oc" ]; then
-            echo "$d"
-            return 0
-        fi
-
-        [ "$d" != "${d%/*}" ] || break
-        d="${d%/*}"
-    done
-
-    fatal "find-output: no $p found"
+cd_toplevel() {
+    local toplevel
+    toplevel=$(git rev-parse --show-toplevel)
+    cd "$toplevel"
 }
 
-ocdev-find-bin() {
-    local basedir
-    basedir=$(ocdev-find-basedir)
-    echo "$basedir/_output/local/bin/$(go env GOHOSTOS)/$(go env GOHOSTARCH)"
+# {{{ ocdev
+
+ocdev-show-toplevel() {
+    pwd
+}
+
+ocdev-show-bindir() {
+    echo "$PWD/_output/local/bin/$(go env GOHOSTOS)/$(go env GOHOSTARCH)"
 }
 
 ocdev-env() {
-    if ! which oc >/dev/null 2>&1; then
-        local bindir
-        if ! bindir=$(ocdev-find-bin); then
-            return 1
-        fi
+    local bindir=$(ocdev-show-bindir) oc=$(which oc 2>/dev/null)
+    if [ "$oc" != "$bindir/oc" ]; then
         PATH="$bindir:$PATH"
     fi
 
     printf "export PATH=%q\n" "$PATH"
+}
+
+ocdev-build-all() {
+    ocdev-build
+    ocdev-build-pod-image
+    ocdev-build-registry
+}
+
+ocdev-build-pod-image() {
+    ./hack/build-go.sh images/pod
+    cp "$(ocdev-show-bindir)/pod" ./images/pod/bin/pod
+    docker build -t openshift/origin-pod:latest ./images/pod
+    rm ./images/pod/bin/pod
+}
+
+ocdev-destroy() {
+    mount | grep -F "$OCDEV_VARDIR/openshift.local.volumes" | cut -d' ' -f3 | xargs -r sudo umount
+    sudo rm -rf "$OCDEV_VARDIR"
+}
+
+# }}}
+
+# {{{ openshift
+
+ocdev-build() {
+    ./hack/build-go.sh cmd/openshift cmd/oc
 }
 
 ocdev-start() {
@@ -64,33 +95,32 @@ ocdev-start() {
 
     local openshift
     if ! openshift=$(which openshift); then
-        fatal "find-output: failed to find openshift binary"
+        fatal "start: failed to find openshift binary"
     fi
 
     local configdir="$OCDEV_VARDIR/openshift.local.config"
     local etcddir="$OCDEV_VARDIR/openshift.local.etcd"
     local volumedir="$OCDEV_VARDIR/openshift.local.volumes"
 
-    "$openshift" start --write-config="$configdir" --etcd-dir="$etcddir" --volume-dir="$volumedir"
+    "$openshift" start --write-config="$configdir" \
+        --images='openshift/origin-${component}:latest' \
+        --etcd-dir="$etcddir" \
+        --volume-dir="$volumedir"
     sudo chmod +r "$configdir/master/admin.kubeconfig"
     cp "$configdir/master/admin.kubeconfig" "$HOME/.kube/config"
 
     sudo "$openshift" start \
-        --latest-images=true \
         --master-config="$configdir/master/master-config.yaml" \
         --node-config="$configdir/node-localhost/node-config.yaml" \
         "$@"
 }
 
-ocdev-registry-build() {
-    local basedir
-    basedir=$(ocdev-find-basedir)
-    cd "$basedir"
-    ./hack/build-go.sh cmd/dockerregistry
+# }}}
 
-    local bindir
-    bindir=$(ocdev-find-bin)
-    docker build -q -t ocdev-registry - <<END
+# {{{ registry
+
+ocdev-build-registry-image() {
+    docker build -t ocdev-registry - <<END
 FROM fedora
 USER 1001
 EXPOSE 5000
@@ -101,10 +131,14 @@ CMD /openshift/bin/dockerregistry
 END
 }
 
-ocdev-registry-start() {
-    local bindir
-    bindir=$(ocdev-find-bin)
-    imagesdir="$(ocdev-find-basedir)/images"
+ocdev-build-registry() {
+    ./hack/build-go.sh cmd/dockerregistry
+    ocdev-build-registry-image
+}
+
+ocdev-start-registry() {
+    local toplevel="$(ocdev-show-toplevel)" bindir="$(ocdev-show-bindir)"
+    local imagesdir="$toplevel/images"
     oadm registry -o json |
         jq --arg bindir "$bindir" --arg imagesdir "$imagesdir" '
             path(.items[] | select(.kind == "Service" and .metadata.name == "docker-registry")) as $svc |
@@ -139,21 +173,23 @@ ocdev-registry-start() {
     oadm policy add-scc-to-user hostaccess -z registry
 }
 
-ocdev-registry-redeploy() {
-    ocdev-registry-build
+ocdev-rollout-registry() {
     oc rollout latest dc/docker-registry || true
     oc rollout status dc/docker-registry
 }
 
-ocdev-destroy() {
-    mount | grep -F "$OCDEV_VARDIR/openshift.local.volumes" | cut -d' ' -f3 | xargs -r sudo umount
-    sudo rm -rf "$OCDEV_VARDIR"
+ocdev-update-registry() {
+    ocdev-registry-build
+    ocdev-registry-rollout
 }
 
+# }}}
+
+cd_toplevel
 [ $# -ge 1 ] || { usage >&2; exit 1; }
 if declare -f "ocdev-$1" >/dev/null || test -x "ocdev-$1"; then
-	"ocdev-$@"
+    "ocdev-$@"
 else
-	usage >&2
-	exit 1
+    usage >&2
+    exit 1
 fi
