@@ -156,10 +156,9 @@ FROM fedora
 USER 1001
 EXPOSE 5000
 ENV REGISTRY_CONFIGURATION_PATH=/openshift/images/dockerregistry/config.yml
-ENV DOCKER_REGISTRY_URL=${DOCKER_REGISTRY_SERVICE_HOST}:${DOCKER_REGISTRY_SERVICE_PORT}
 VOLUME /registry
 VOLUME /openshift/bin
-CMD /openshift/bin/dockerregistry
+CMD DOCKER_REGISTRY_URL=${DOCKER_REGISTRY_SERVICE_HOST}:${DOCKER_REGISTRY_SERVICE_PORT} /openshift/bin/dockerregistry
 END
 }
 
@@ -214,19 +213,45 @@ ocdev-logs-registry() {
 }
 
 ocdev-update-registry() {
-    ocdev-registry-build
-    ocdev-registry-rollout
+    ocdev-build-registry
+    ocdev-rollout-registry
 }
 
 ocdev-registry-enabled-metrics() {
-    ocdefault patch dc docker-registry -p '{"spec": {"template": {"spec": {"containers": [{
-      "name": "registry",
-      "env": [
-        {"name": "REGISTRY_OPENSHIFT_METRICS_ENABLED", "value": "true"},
-        {"name": "REGISTRY_OPENSHIFT_METRICS_SECRET", "value": "mysecret"}
-      ]
-    }]}}}}'
+    ocdefault patch dc docker-registry -p '{"spec": {"template":
+      {"spec": {"containers": [{
+        "name": "registry",
+        "env": [
+          {"name": "REGISTRY_OPENSHIFT_METRICS_ENABLED", "value": "true"},
+          {"name": "REGISTRY_OPENSHIFT_METRICS_SECRET", "value": "mysecret"}
+        ]
+      }]}}
+    }}'
     ocdefault rollout status dc/docker-registry
+}
+
+ocdev-registry-anonymous() {
+    ocdefault adm policy add-cluster-role-to-user registry-viewer system:anonymous
+}
+
+ocdev-registry-anonymous-myproject() {
+    oc policy add-role-to-user registry-viewer system:anonymous -n myproject
+}
+
+ocdev-registry-generate-garbage() {
+    docker login -u $(oc whoami) -p $(oc whoami -t) 172.30.1.1:5000
+
+    oc import-image fedora --from=fedora --confirm
+    oc import-image ubuntu --from=ubuntu --confirm
+    oc delete is/ubuntu
+
+    docker pull busybox
+    docker pull busybox:glibc
+    docker tag busybox 172.30.1.1:5000/myproject/busybox
+    docker push 172.30.1.1:5000/myproject/busybox
+    docker tag busybox:glibc 172.30.1.1:5000/myproject/busybox-glibc
+    docker push 172.30.1.1:5000/myproject/busybox-glibc
+    oc delete is/busybox-glibc
 }
 
 # }}}
