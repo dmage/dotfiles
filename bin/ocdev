@@ -92,10 +92,17 @@ ocdev-build-all() {
 
 ocdev-build-pod-image() {
     ./hack/build-go.sh images/pod
-    cp "$OCDEV_BINDIR/pod" ./images/pod/bin/pod
-    docker inspect openshift/origin-source >/dev/null 2>&1 || docker pull openshift/origin-source
-    docker build -t openshift/origin-pod:latest ./images/pod
-    rm ./images/pod/bin/pod
+
+    local tmp
+    tmp=$(mktemp -d "${TMPDIR:-/tmp}"/ocdev-pod.XXXXXXXX)
+    cp "$OCDEV_BINDIR/pod" "$tmp/pod"
+    printf >"$tmp/Dockerfile" "%s\n" \
+        'FROM scratch' \
+        'COPY pod /pod' \
+        'USER 1001' \
+        'ENTRYPOINT ["/pod"]'
+    docker build -t openshift/origin-pod:latest "$tmp"
+    rm -rf "$tmp"
 }
 
 ocdev-create-defaults() {
