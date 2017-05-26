@@ -93,6 +93,7 @@ ocdev-build-all() {
 ocdev-build-pod-image() {
     ./hack/build-go.sh images/pod
     cp "$OCDEV_BINDIR/pod" ./images/pod/bin/pod
+    docker inspect openshift/origin-source >/dev/null 2>&1 || docker pull openshift/origin-source
     docker build -t openshift/origin-pod:latest ./images/pod
     rm ./images/pod/bin/pod
 }
@@ -208,6 +209,17 @@ ocdev-logs-registry() {
 ocdev-update-registry() {
     ocdev-registry-build
     ocdev-registry-rollout
+}
+
+ocdev-registry-enabled-metrics() {
+    ocdefault patch dc docker-registry -p '{"spec": {"template": {"spec": {"containers": [{
+      "name": "registry",
+      "env": [
+        {"name": "REGISTRY_OPENSHIFT_METRICS_ENABLED", "value": "true"},
+        {"name": "REGISTRY_OPENSHIFT_METRICS_SECRET", "value": "mysecret"}
+      ]
+    }]}}}}'
+    ocdefault rollout status dc/docker-registry
 }
 
 # }}}
