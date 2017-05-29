@@ -16,7 +16,7 @@ usage() {
     echo "  ocdefault        Run oc command as the system:admin user in the default namespace"
     echo "  build-all        Build openshift, oc, and dockerregistry"
     echo "  build-pod-image  Build openshift/origin-pod:latest Docker image"
-    echo "  create-defaults  Create the user 'developer' and the project 'myproject'"
+    echo "  create-defaults  Create the user 'developer', the project 'myproject', and default imagestreams"
     echo "  destroy          Remove generated config files, etcd data, volumes, etc"
     echo
     echo "OpenShift:"
@@ -138,6 +138,7 @@ ocdev-build-pod-image() {
 ocdev-create-defaults() {
     oc login -u developer -p developer
     oc new-project myproject
+    ocdefault -n openshift create -f ./examples/image-streams/image-streams-centos7.json
 }
 
 ocdev-destroy() {
