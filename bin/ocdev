@@ -44,8 +44,13 @@ fatal() {
 }
 
 cd_toplevel() {
-    local toplevel
-    toplevel=$(git rev-parse --show-toplevel)
+    local toplevel err
+    toplevel=$(git rev-parse --show-toplevel) || err=$?
+    if [ "$err" -ne 0 ]; then
+        echo
+        echo "You are expected to run $PROGNAME from OpenShift's git repository."
+        exit "$err"
+    fi
     cd "$toplevel"
 }
 
@@ -62,13 +67,13 @@ ocdefault() {
     oc --context=$(kubectl config current-context | sed -e 's,^[^/]*,default,' -e 's,[^/]*$,system:admin,') "$@"
 }
 
-# {{{ ocdev
+# {{{ ocdevhelper
 
-ocdev-commands() {
-    declare -F | sed -ne 's/^declare -f ocdev-\(.*\)$/\1/p'
+ocdevhelper-commands() {
+    declare -F | sed -ne 's/^declare -f ocdev\(helper\)\?-\(.*\)$/\2/p'
 }
 
-ocdev-bash-completion() {
+ocdevhelper-bash-completion() {
     cat <<'END'
 _ocdev()
 {
@@ -84,6 +89,10 @@ _ocdev()
 complete -o nospace -F _ocdev ocdev
 END
 }
+
+# }}}
+
+# {{{ ocdev
 
 ocdev-show-toplevel() {
     pwd
@@ -324,10 +333,16 @@ ocdev-registry-generate-garbage() {
 
 # }}}
 
+[ $# -ge 1 ] || { usage >&2; exit 1; }
+
+if declare -f "ocdevhelper-$1" >/dev/null; then
+    "ocdevhelper-$@"
+    exit $?
+fi
+
 cd_toplevel
 add_bindir_to_path
 
-[ $# -ge 1 ] || { usage >&2; exit 1; }
 if declare -f "ocdev-$1" >/dev/null || test -x "ocdev-$1"; then
     "ocdev-$@"
 else
