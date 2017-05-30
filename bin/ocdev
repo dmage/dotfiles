@@ -44,7 +44,7 @@ fatal() {
 }
 
 cd_toplevel() {
-    local toplevel err
+    local toplevel err=0
     toplevel=$(git rev-parse --show-toplevel) || err=$?
     if [ "$err" -ne 0 ]; then
         echo
@@ -205,6 +205,12 @@ END
 ocdev-build-registry() {
     ./hack/build-go.sh cmd/dockerregistry
     ocdev-build-registry-image
+}
+
+ocdev-test-registry() {
+    local origin=github.com/openshift/origin
+    go test -i -v $origin/cmd/dockerregistry/... $origin/pkg/cmd/dockerregistry/... $origin/pkg/dockerregistry/...
+    go test $origin/cmd/dockerregistry/... $origin/pkg/cmd/dockerregistry/... $origin/pkg/dockerregistry/...
 }
 
 ocdev-start-registry() {

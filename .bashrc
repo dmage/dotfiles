@@ -51,3 +51,5 @@ esac
     for f in ~/.bashrc.d/*; do
         . $f
     done
+
+eval "$(ocdev bash-completion)"
