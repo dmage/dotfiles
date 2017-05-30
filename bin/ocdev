@@ -14,6 +14,7 @@ usage() {
     echo "  env              Show adjusted environment variables"
     echo "  oc               Run oc from the current source tree"
     echo "  ocdefault        Run oc command as the system:admin user in the default namespace"
+    echo "  oadm             Run openshift admin as the system:admin user"
     echo "  build-all        Build openshift, oc, and dockerregistry"
     echo "  build-pod-image  Build openshift/origin-pod:latest Docker image"
     echo "  create-defaults  Create the user 'developer', the project 'myproject', and default imagestreams"
@@ -67,6 +68,10 @@ ocdefault() {
     oc --context=$(kubectl config current-context | sed -e 's,^[^/]*,default,' -e 's,[^/]*$,system:admin,') "$@"
 }
 
+oadm() {
+    ocdefault adm "$@"
+}
+
 # {{{ ocdevhelper
 
 ocdevhelper-commands() {
@@ -112,6 +117,10 @@ ocdev-oc() {
 
 ocdev-ocdefault() {
     ocdefault "$@"
+}
+
+ocdev-oadm() {
+    oadm "$@"
 }
 
 ocdev-build-all() {
@@ -182,8 +191,8 @@ ocdev-start() {
 # {{{ router
 
 ocdev-start-router() {
-    ocdefault adm policy add-scc-to-user hostnetwork -z router
-    ocdefault adm router
+    oadm policy add-scc-to-user hostnetwork -z router
+    oadm router
 }
 
 # }}}
@@ -215,7 +224,7 @@ ocdev-test-registry() {
 
 ocdev-start-registry() {
     local bindir="$OCDEV_BINDIR" imagesdir="$PWD/images"
-    ocdefault adm registry -o json |
+    oadm registry -o json |
         jq --arg bindir "$bindir" --arg imagesdir "$imagesdir" '
             path(.items[] | select(.kind == "Service" and .metadata.name == "docker-registry")) as $svc |
             setpath($svc + ["spec", "clusterIP"]; "172.30.1.1") |
@@ -246,7 +255,7 @@ ocdev-start-registry() {
             }])
         ' |
         ocdefault create -f -
-    ocdefault adm policy add-scc-to-user hostaccess -z registry
+    oadm policy add-scc-to-user hostaccess -z registry
 }
 
 ocdev-rollout-registry() {
@@ -315,7 +324,7 @@ ocdev-registry-expose-secured() {
 }
 
 ocdev-registry-anonymous() {
-    ocdefault adm policy add-cluster-role-to-user registry-viewer system:anonymous
+    oadm policy add-cluster-role-to-user registry-viewer system:anonymous
 }
 
 ocdev-registry-anonymous-myproject() {
