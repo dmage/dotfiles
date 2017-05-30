@@ -173,7 +173,7 @@ ocdev-start() {
 
     sudo "$openshift" start \
         --master-config="$configdir/master/master-config.yaml" \
-        --node-config="$configdir/node-localhost/node-config.yaml" \
+        --node-config="$configdir/node-$(hostname)/node-config.yaml" \
         "$@"
 }
 
