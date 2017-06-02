@@ -9,27 +9,31 @@ usage() {
     echo "usage: $PROGNAME <command>"
     echo
     echo "Available commands:"
-    echo "  show-toplevel    Show the absolute path of the top-level directory"
-    echo "  show-bindir      Show the absolute path of the directory with OpenShift binaries"
-    echo "  env              Show adjusted environment variables"
-    echo "  oc               Run oc from the current source tree"
-    echo "  ocdefault        Run oc command as the system:admin user in the default namespace"
-    echo "  oadm             Run openshift admin as the system:admin user"
-    echo "  build-all        Build openshift, oc, and dockerregistry"
-    echo "  build-pod-image  Build openshift/origin-pod:latest Docker image"
-    echo "  create-defaults  Create the user 'developer', the project 'myproject', and default imagestreams"
-    echo "  destroy          Remove generated config files, etcd data, volumes, etc"
+    echo "  show-toplevel       Show the absolute path of the top-level directory"
+    echo "  show-bindir         Show the absolute path of the directory with OpenShift binaries"
+    echo "  env                 Show adjusted environment variables"
+    echo "  oc                  Run oc from the current source tree"
+    echo "  ocdefault           Run oc command as the system:admin user in the default namespace"
+    echo "  oadm                Run openshift admin as the system:admin user"
+    echo "  exec                Run a program from the directory with OpenShift binaries"
+    echo "  build-all           Build openshift, oc, and dockerregistry"
+    echo "  build-pod-image     Build openshift/origin-pod:latest Docker image"
+    echo "  create-defaults     Create the user 'developer', the project 'myproject', and default imagestreams"
+    echo "  login-as-developer  Login as the developer user"
+    echo "  destroy             Remove generated config files, etcd data, volumes, etc"
     echo
     echo "OpenShift:"
-    echo "  build            Build openshift and oc binaries"
-    echo "  start            Start the all-in-one OpenShift server in the foreground"
+    echo "  build               Build openshift and oc binaries"
+    echo "  start               Start the all-in-one OpenShift server in the foreground"
     echo
     echo "Commands for the registry:"
+    echo "  login-as-pruner       Login as a user with the system:image-pruner role"
     echo "  build-registry-image  Build the ocdev-registry:latest Docker image"
     echo "  build-registry        Build the dockerregistry binary"
     echo "  start-registry        Create Service and DeploymentConfig for the registry"
     echo "  rollout-registry      Redeploy the registry"
     echo "  update-registry       Rebuild and redeploy the registry"
+    echo "  exec-registry         Run a command in a running registry pod"
     echo
     echo "Usage examples:"
     echo "  ocdev build-all"
@@ -123,6 +127,14 @@ ocdev-oadm() {
     oadm "$@"
 }
 
+ocdev-exec() {
+    local prog name=$1; shift
+    if ! prog=$(which "$name"); then
+        exit 1
+    fi
+    "$prog" "$@"
+}
+
 ocdev-build-all() {
     ocdev-build
     ocdev-build-pod-image
@@ -148,6 +160,10 @@ ocdev-create-defaults() {
     oc login -u developer -p developer
     oc new-project myproject
     ocdefault -n openshift create -f ./examples/image-streams/image-streams-centos7.json
+}
+
+ocdev-login-as-developer() {
+    oc login -u developer
 }
 
 ocdev-destroy() {
@@ -198,6 +214,11 @@ ocdev-start-router() {
 # }}}
 
 # {{{ registry
+
+ocdev-login-as-pruner() {
+    oc login -u pruner -p pruner
+    oadm policy add-cluster-role-to-user system:image-pruner pruner
+}
 
 ocdev-build-registry-image() {
     docker build -t ocdev-registry - <<'END'
@@ -272,7 +293,11 @@ ocdev-update-registry() {
     ocdev-rollout-registry
 }
 
-ocdev-registry-enabled-metrics() {
+ocdev-exec-registry() {
+    ocdefault exec -i -t $(ocdefault get pods -l deploymentconfig=docker-registry -o name | sed -e 's!^pods/!!') -- "$@"
+}
+
+ocdev-registry-enable-metrics() {
     ocdefault patch dc docker-registry -p '{"spec": {"template":
       {"spec": {"containers": [{
         "name": "registry",
@@ -332,11 +357,17 @@ ocdev-registry-anonymous-myproject() {
 }
 
 ocdev-registry-generate-garbage() {
+    ocdev-login-as-developer
+    oc project myproject
     docker login -u $(oc whoami) -p $(oc whoami -t) 172.30.1.1:5000
 
-    oc import-image fedora --from=fedora --confirm
-    oc import-image ubuntu --from=ubuntu --confirm
-    oc delete is/ubuntu
+    oc import-image dmage-a --from=dmage/example:a --confirm
+    docker pull 172.30.1.1:5000/myproject/dmage-a
+    docker rmi 172.30.1.1:5000/myproject/dmage-a
+    oc import-image dmage-b --from=dmage/example:b --confirm
+    docker pull 172.30.1.1:5000/myproject/dmage-b
+    docker rmi 172.30.1.1:5000/myproject/dmage-b
+    oc delete is/dmage-b
 
     docker pull busybox
     docker pull busybox:glibc
@@ -345,6 +376,69 @@ ocdev-registry-generate-garbage() {
     docker tag busybox:glibc 172.30.1.1:5000/myproject/busybox-glibc
     docker push 172.30.1.1:5000/myproject/busybox-glibc
     oc delete is/busybox-glibc
+    ocdefault delete image $(ocdefault get images | grep -F /myproject/busybox-glibc@ | cut -d' ' -f1)
+}
+
+# }}}
+
+# {{{ prometheus
+
+ocdev-prometheus-generate-config() {
+    cat <<END
+global:
+  scrape_interval:     5s
+  evaluation_interval: 5s
+
+scrape_configs:
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  - job_name: 'cadvisor'
+    static_configs:
+      - targets: ['cadvisor:8080']
+
+  - job_name: 'docker-registry'
+    metrics_path: /extensions/v2/metrics
+    bearer_token: mysecret
+    static_configs:
+      - targets: ['172.30.1.1:5000']
+}
+END
+}
+
+ocdev-prometheus-deploy() {
+    [ $# -ge 1 ] || {
+        echo "usage: $PROGNAME: prometheus-deploy <prometheus.yml>" >&2
+        exit 1
+    }
+
+    oc new-app google/cadvisor
+    oc new-app prom/prometheus
+
+    oc expose service cadvisor --hostname='cadvisor.127.0.0.1.nip.io'
+    oc expose service prometheus --hostname='prometheus.127.0.0.1.nip.io'
+
+    oc create configmap prom-config --from-file="$1"
+
+    oc patch dc/prometheus -p '{"spec": {"template": {"spec": {
+      "volumes": [{
+        "name": "prom-config-volume",
+        "configMap": {
+          "name": "prom-config",
+          "defaultMode": 420
+        }
+      }],
+      "containers":[{
+        "name": "prometheus",
+        "volumeMounts": [{
+          "name": "prom-config-volume",
+          "mountPath": "/etc/prometheus/"
+        }]
+      }]
+    } } } }'
+
+    oc rollout status dc/prometheus
 }
 
 # }}}

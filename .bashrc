@@ -53,3 +53,6 @@ esac
     done
 
 eval "$(ocdev bash-completion)"
+alias oc='ocdev oc'
+alias oadmdefault='ocdev oadm'
+alias ocdefault='ocdev ocdefault'
