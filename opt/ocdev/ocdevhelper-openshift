@@ -4,22 +4,18 @@ usage() {
     echo "usage: $OCDEV_PROGNAME <command>"
     echo
     echo "Available commands:"
-    echo "  show-toplevel       Show the absolute path of the top-level directory"
-    echo "  show-bindir         Show the absolute path of the directory with OpenShift binaries"
-    echo "  env                 Show adjusted environment variables"
-    echo "  oc                  Run oc from the current source tree"
-    echo "  ocdefault           Run oc command as the system:admin user in the default namespace"
-    echo "  oadm                Run openshift admin as the system:admin user"
-    echo "  exec                Run a program from the directory with OpenShift binaries"
-    echo "  build-all           Build openshift, oc, and dockerregistry"
-    echo "  login-as-developer  Login as the developer user"
-    echo "  destroy             Remove generated config files, etcd data, volumes, etc"
-    echo "  registry            Manage the integrated Docker registry"
-    echo
-    echo "OpenShift:"
-    echo "  build               Build openshift and oc binaries"
-    echo "  start               Start the all-in-one OpenShift server in the foreground"
-    echo "  create-defaults     Create the user 'developer', the project 'myproject', and default imagestreams"
+    echo "  build            Build openshift binary"
+    echo "  docker-build     Cross-compile openshift binary for Docker"
+    echo "  build-image      "
+    echo "  start            Start the all-in-one OpenShift server in the foreground"
+    echo "  up               "
+    echo "  down             "
+    echo "  create-defaults  Create the user 'developer', the project 'myproject', and default imagestreams"
+    echo "  destroy          Remove generated config files, etcd data, volumes, etc"
+}
+
+ocdevopenshift-build() {
+    ocdev build cmd/openshift
 }
 
 ocdevopenshift-docker-build() {
@@ -33,6 +29,7 @@ FROM fedora
 RUN dnf install -y iptables && dnf clean all
 EXPOSE 8443 53
 VOLUME /openshift/bin
+ENV OPENSHIFT_CONTAINERIZED=true
 ENTRYPOINT ["/openshift/bin/openshift"]
 END
 }
@@ -97,13 +94,25 @@ ocdevopenshift-up() {
         fi
         cp "$configdir/master/admin.kubeconfig" "$HOME/.kube/config"
     else
-        public=$(grep ^masterPublicURL: ~/.ocdev/docker/config/master/master-config.yaml | cut -d' ' -f2-)
+        public=$(grep ^masterPublicURL: ~/.ocdev/docker/config/master/master-config.yaml | sed -e 's/^[^:]*: *//')
     fi
+
+    local dockeropts=""
+
+    local cgroupdriver=$(docker info | grep '^Cgroup Driver:' | sed -e 's/^[^:]*: *//')
+    case "$cgroupdriver" in
+    systemd)
+        dockeropts="$dockeropts -v /var/run:/var/run:rw"
+        dockeropts="$dockeropts -v /sys:/sys:rw"
+        dockeropts="$dockeropts -v /sys/fs/cgroup:/sys/fs/cgroup:rw"
+    esac
 
     docker run -d --name=origin --privileged --net=host --hostname="$hostname" \
         -v "$configdir:/ocdev/docker/config" \
         -v "$OCDEV_DOCKER_BINDIR:/openshift/bin" \
         -v "/var/run/docker.sock:/var/run/docker.sock" \
+        -v "/:/rootfs:ro" \
+        $dockeropts \
         ocdev-origin start \
         --master-config="/ocdev/docker/config/master/master-config.yaml" \
         --node-config="/ocdev/docker/config/node-$hostname/node-config.yaml" \
@@ -114,8 +123,12 @@ ocdevopenshift-up() {
     echo
 }
 
+ocdevopenshift-down() {
+    docker kill origin
+}
 
 ocdevopenshift-create-defaults() {
+set -x
     oc login -u developer -p developer
     oc new-project myproject
     ocdefault -n openshift create -f ./examples/image-streams/image-streams-centos7.json
@@ -124,11 +137,6 @@ ocdevopenshift-create-defaults() {
 ocdevopenshift-destroy() {
     mount | grep -F "$OCDEV_VARDIR/openshift.local.volumes" | cut -d' ' -f3 | xargs -r sudo umount
     sudo rm -rf "$OCDEV_VARDIR"
-}
-
-ocdev-login-as-pruner() {
-    oc login -u pruner -p pruner
-    oadm policy add-cluster-role-to-user system:image-pruner pruner
 }
 
 ocdevutil-main "ocdevopenshifthelper-" "ocdevopenshift-" "$@"
