@@ -67,22 +67,51 @@ ocdevopenshift-up() {
     local etcddir="$OCDEV_VARDIR/docker/etcd"
     local volumedir="$OCDEV_VARDIR/docker/volumes"
 
-    [ -z "$(docker ps -aqf name='^/origin$')" ] || docker rm origin
+    [ -z "$(docker ps -aqf name='^/origin$')" ] || docker rm origin >/dev/null
 
-    docker run --rm --net=host --hostname="$(hostname -f)" \
-        -v "$configdir:/ocdev/docker/config" \
-        -v "$OCDEV_DOCKER_BINDIR:/openshift/bin" \
-        ocdev-origin start --write-config=/ocdev/docker/config \
-        --images='openshift/origin-${component}:latest'
+    local hostname
+    hostname=$(hostname -f)
 
-    docker run --name=origin --net=host --hostname="$(hostname -f)" -p 8443:8443 --privileged \
+    local public
+    if [ ! -e "$configdir/master" -o ! -e "$configdir/node-$hostname" ]; then
+        local publicip
+        if ifconfig bridge100 >/dev/null 2>&1; then
+            # Docker for Mac
+            publicip=$(docker run --rm --net=host busybox sh -c 'ip -o -4 addr show eth1 | awk -F"[ /]+" "{print\$4}"')
+        else
+            publicip=127.0.0.1
+        fi
+        public="https://$publicip:8443"
+
+        docker run --rm --net=host --hostname="$hostname" \
+            -v "$configdir:/ocdev/docker/config" \
+            -v "$OCDEV_DOCKER_BINDIR:/openshift/bin" \
+            ocdev-origin start --write-config=/ocdev/docker/config \
+            --images='openshift/origin-${component}:latest' \
+            --public-master="$public"
+        if [ ! -r "$configdir/master/admin.kubeconfig" ]; then
+            sudo chmod +r "$configdir/master/admin.kubeconfig"
+        fi
+        if ifconfig bridge100 >/dev/null 2>&1; then
+            sed -i.bak -e "s,^\(current-context:\).*,\1 default/${publicip//./-}:8443/system:admin," "$configdir/master/admin.kubeconfig"
+        fi
+        cp "$configdir/master/admin.kubeconfig" "$HOME/.kube/config"
+    else
+        public=$(grep ^masterPublicURL: ~/.ocdev/docker/config/master/master-config.yaml | cut -d' ' -f2-)
+    fi
+
+    docker run -d --name=origin --privileged --net=host --hostname="$hostname" \
         -v "$configdir:/ocdev/docker/config" \
         -v "$OCDEV_DOCKER_BINDIR:/openshift/bin" \
         -v "/var/run/docker.sock:/var/run/docker.sock" \
         ocdev-origin start \
         --master-config="/ocdev/docker/config/master/master-config.yaml" \
-        --node-config="/ocdev/docker/config/node-$(hostname)/node-config.yaml" \
+        --node-config="/ocdev/docker/config/node-$hostname/node-config.yaml" \
         "$@"
+
+    echo
+    printf "%s\n" "$public"
+    echo
 }
 
 
