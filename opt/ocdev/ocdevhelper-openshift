@@ -128,7 +128,6 @@ ocdevopenshift-down() {
 }
 
 ocdevopenshift-create-defaults() {
-set -x
     oc login -u developer -p developer
     oc new-project myproject
     ocdefault -n openshift create -f ./examples/image-streams/image-streams-centos7.json
