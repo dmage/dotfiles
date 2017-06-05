@@ -1,0 +1,105 @@
+#!/bin/bash -efu
+
+usage() {
+    echo "usage: $OCDEV_PROGNAME <command>"
+    echo
+    echo "Available commands:"
+    echo "  show-toplevel       Show the absolute path of the top-level directory"
+    echo "  show-bindir         Show the absolute path of the directory with OpenShift binaries"
+    echo "  env                 Show adjusted environment variables"
+    echo "  oc                  Run oc from the current source tree"
+    echo "  ocdefault           Run oc command as the system:admin user in the default namespace"
+    echo "  oadm                Run openshift admin as the system:admin user"
+    echo "  exec                Run a program from the directory with OpenShift binaries"
+    echo "  build-all           Build openshift, oc, and dockerregistry"
+    echo "  login-as-developer  Login as the developer user"
+    echo "  destroy             Remove generated config files, etcd data, volumes, etc"
+    echo "  registry            Manage the integrated Docker registry"
+    echo
+    echo "OpenShift:"
+    echo "  build               Build openshift and oc binaries"
+    echo "  start               Start the all-in-one OpenShift server in the foreground"
+    echo "  create-defaults     Create the user 'developer', the project 'myproject', and default imagestreams"
+}
+
+ocdevopenshift-docker-build() {
+    ocdev docker-build cmd/openshift
+}
+
+ocdevopenshift-build-image() {
+    ocdevopenshift-docker-build
+    docker build -t ocdev-origin - <<'END'
+FROM fedora
+RUN dnf install -y iptables && dnf clean all
+EXPOSE 8443 53
+VOLUME /openshift/bin
+ENTRYPOINT ["/openshift/bin/openshift"]
+END
+}
+
+ocdevopenshift-start() {
+    local openshift
+    if ! openshift=$(which openshift); then
+        fatal "start: failed to find openshift binary"
+    fi
+
+    local configdir="$OCDEV_VARDIR/openshift.local.config"
+    local etcddir="$OCDEV_VARDIR/openshift.local.etcd"
+    local volumedir="$OCDEV_VARDIR/openshift.local.volumes"
+
+    "$openshift" start --write-config="$configdir" \
+        --images='openshift/origin-${component}:latest' \
+        --etcd-dir="$etcddir" \
+        --volume-dir="$volumedir"
+    sudo chmod +r "$configdir/master/admin.kubeconfig"
+    cp "$configdir/master/admin.kubeconfig" "$HOME/.kube/config"
+
+    sudo "$openshift" start \
+        --master-config="$configdir/master/master-config.yaml" \
+        --node-config="$configdir/node-$(hostname)/node-config.yaml" \
+        "$@"
+}
+
+ocdevopenshift-up() {
+    ocdevutil-docker-init
+
+    local configdir="$OCDEV_VARDIR/docker/config"
+    local etcddir="$OCDEV_VARDIR/docker/etcd"
+    local volumedir="$OCDEV_VARDIR/docker/volumes"
+
+    [ -z "$(docker ps -aqf name='^/origin$')" ] || docker rm origin
+
+    docker run --rm --net=host --hostname="$(hostname -f)" \
+        -v "$configdir:/ocdev/docker/config" \
+        -v "$OCDEV_DOCKER_BINDIR:/openshift/bin" \
+        ocdev-origin start --write-config=/ocdev/docker/config \
+        --images='openshift/origin-${component}:latest'
+
+    docker run --name=origin --net=host --hostname="$(hostname -f)" -p 8443:8443 --privileged \
+        -v "$configdir:/ocdev/docker/config" \
+        -v "$OCDEV_DOCKER_BINDIR:/openshift/bin" \
+        -v "/var/run/docker.sock:/var/run/docker.sock" \
+        ocdev-origin start \
+        --master-config="/ocdev/docker/config/master/master-config.yaml" \
+        --node-config="/ocdev/docker/config/node-$(hostname)/node-config.yaml" \
+        "$@"
+}
+
+
+ocdevopenshift-create-defaults() {
+    oc login -u developer -p developer
+    oc new-project myproject
+    ocdefault -n openshift create -f ./examples/image-streams/image-streams-centos7.json
+}
+
+ocdevopenshift-destroy() {
+    mount | grep -F "$OCDEV_VARDIR/openshift.local.volumes" | cut -d' ' -f3 | xargs -r sudo umount
+    sudo rm -rf "$OCDEV_VARDIR"
+}
+
+ocdev-login-as-pruner() {
+    oc login -u pruner -p pruner
+    oadm policy add-cluster-role-to-user system:image-pruner pruner
+}
+
+ocdevutil-main "ocdevopenshifthelper-" "ocdevopenshift-" "$@"
