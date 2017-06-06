@@ -8,6 +8,11 @@ usage() {
     echo "  up           "
 }
 
+ocdevcluster-build() {
+    ocdev openshift build
+    ocdev registry build
+}
+
 ocdevcluster-build-image() {
     ocdev openshift build-image
     ocdev pod build-image

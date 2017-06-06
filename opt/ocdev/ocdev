@@ -17,20 +17,23 @@ usage() {
     echo "  ocdefault           Run oc command as the system:admin user in the default namespace"
     echo "  oadm                Run openshift admin as the system:admin user"
     echo "  exec                Run a program from the directory with OpenShift binaries"
-    echo "  build-all           Build openshift, oc, and dockerregistry"
+    echo "  build               Build an OpenShift binary"
+    echo "  docker-build        Cross-compile an OpenShift binary for a Docker image"
     echo "  login-as-developer  Login as the developer user"
-    echo "  destroy             Remove generated config files, etcd data, volumes, etc"
-    echo "  registry            Manage the integrated Docker registry"
-    echo "  pod                 Manage the pod image"
+    echo "  login-as-pruner     Login as the pruner user"
     echo
-    echo "OpenShift:"
-    echo "  build               Build openshift and oc binaries"
-    echo "  start               Start the all-in-one OpenShift server in the foreground"
+    echo "Commands for components:"
+    echo "  cluster             Manage an OpenShift cluster"
+    echo "  openshift           Manage the OpenShift server"
+    echo "  pod                 Manage the pod image"
+    echo "  registry            Manage the integrated Docker registry"
+    echo "  prometheus          Manage Prometheus"
     echo "  create-defaults     Create the user 'developer', the project 'myproject', and default imagestreams"
     echo
     echo "Usage examples:"
+    echo "  ./hack/build-go.sh cmd/oc"
     echo "  ocdev cluster build"
-    echo "  ocdev openshift run --loglevel=4"
+    echo "  ocdev openshift start --loglevel=4"
     echo "  ocdev registry up"
     echo
     echo "  ocdev registry update"
@@ -73,20 +76,19 @@ ocdevutil-commands() {
 export -f ocdevutil-commands
 
 ocdevutil-init() {
-    local toplevel err=0
-    toplevel=$(git rev-parse --show-toplevel) || err=$?
+    local err=0
+    OCDEV_TOPLEVEL=$(git rev-parse --show-toplevel) || err=$?
     if [ "$err" -ne 0 ]; then
         echo
         echo "You are expected to run $OCDEV_PROGNAME from OpenShift's git repository."
         exit "$err"
     fi
-    cd "$toplevel"
 
-    export OCDEV_BINDIR="$PWD/_output/local/bin/$(go env GOOS)/$(go env GOARCH)"
+    export OCDEV_BINDIR="$OCDEV_TOPLEVEL/_output/local/bin/$(go env GOOS)/$(go env GOARCH)"
 
     local oc=$(which oc 2>/dev/null)
     if [ "$oc" != "$OCDEV_BINDIR/oc" ]; then
-        PATH="$OCDEV_BINDIR:$PATH"
+        export PATH="$OCDEV_BINDIR:$PATH"
     fi
 }
 export -f ocdevutil-init
@@ -123,6 +125,7 @@ ocdevutil-main() {
     fi
 
     ocdevutil-init
+    cd "$OCDEV_TOPLEVEL"
 
     if type "$prefix$1" >/dev/null 2>&1; then
         export OCDEV_PROGNAME="${OCDEV_PROGNAME-}${OCDEV_PROGNAME:+ }$1"
@@ -150,6 +153,33 @@ complete -o bashdefault -o default -F _ocdev ocdev
 END
 }
 
+ocdevhelper-oc() {
+    ocdevutil-init
+    oc "$@"
+}
+
+ocdevhelper-ocdefault() {
+    ocdevutil-init
+    ocdefault "$@"
+}
+
+ocdevhelper-oadm() {
+    ocdevutil-init
+    oadm "$@"
+}
+
+ocdevhelper-exec() {
+    ocdevutil-init
+
+    # hide internals (ocdev-show-toplevel, usage, etc)
+    local prog name=$1; shift
+    if ! prog=$(which "$name"); then
+        exit 1
+    fi
+
+    "$prog" "$@"
+}
+
 # }}}
 
 # {{{ ocdev
@@ -164,26 +194,6 @@ ocdev-show-bindir() {
 
 ocdev-env() {
     printf "export PATH=%q\n" "$PATH"
-}
-
-ocdev-oc() {
-    oc "$@"
-}
-
-ocdev-ocdefault() {
-    ocdefault "$@"
-}
-
-ocdev-oadm() {
-    oadm "$@"
-}
-
-ocdev-exec() {
-    local prog name=$1; shift
-    if ! prog=$(which "$name"); then
-        exit 1
-    fi
-    "$prog" "$@"
 }
 
 ocdev-build() {
@@ -241,12 +251,6 @@ ocdev-login-as-pruner() {
 ocdev-start-router() {
     oadm policy add-scc-to-user hostnetwork -z router
     oadm router
-}
-
-ocdev-build-all() {
-    ocdev-build-openshift
-    ocdev-build-pod-image
-    ocdev-build-registry
 }
 
 ocdevutil-main "ocdevhelper-" "ocdev-" "$@"

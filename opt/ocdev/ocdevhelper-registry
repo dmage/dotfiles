@@ -9,7 +9,7 @@ usage() {
     echo "  exec         Run a command in a running registry pod"
     echo "  rollout      Redeploy the registry"
     echo "  update       Rebuild and redeploy the registry"
-    echo "  start        Create Service and DeploymentConfig for the registry"
+    echo "  up           Create Service and DeploymentConfig for the registry"
     echo "  anonymous"
     echo "  anonymous-myproject"
     echo "  enable-metrics"
@@ -46,7 +46,7 @@ ocdevregistry-test() {
     go test $origin/cmd/dockerregistry/... $origin/pkg/cmd/dockerregistry/... $origin/pkg/dockerregistry/...
 }
 
-ocdevregistry-start() {
+ocdevregistry-up() {
     ocdevutil-docker-init
     local bindir="$OCDEV_DOCKER_BINDIR" imagesdir="$PWD/images"
     oadm registry -o json |
