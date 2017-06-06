@@ -125,6 +125,9 @@ let g:secure_modelines_allowed_items = [
 au FileType vim setl et ts=2 sts=2 sw=2 foldmethod=marker
 au FileType yaml setl et ts=2 sts=2 sw=2
 
+" jump to the last position when reopening a file
+au BufReadPost * if line("'\"") > 1 && line("'\"") <= line("$") | exe "normal! g'\"" | endif
+
 aug AutoloadVimrc
   au!
   au BufWritePost .vimrc source $MYVIMRC|set ft=vim

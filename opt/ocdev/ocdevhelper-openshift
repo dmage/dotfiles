@@ -103,15 +103,19 @@ ocdevopenshift-up() {
     case "$cgroupdriver" in
     systemd)
         dockeropts="$dockeropts -v /var/run:/var/run:rw"
-        dockeropts="$dockeropts -v /sys:/sys:rw"
         dockeropts="$dockeropts -v /sys/fs/cgroup:/sys/fs/cgroup:rw"
     esac
 
-    docker run -d --name=origin --privileged --net=host --hostname="$hostname" \
+    docker run --rm -v /:/rootfs:rw busybox sh -c 'V=/rootfs/openshift.local.volumes; rm -rf $V && mkdir -p $V'
+    docker run --name=origin --privileged --net=host --hostname="$hostname" \
         -v "$configdir:/ocdev/docker/config" \
         -v "$OCDEV_DOCKER_BINDIR:/openshift/bin" \
         -v "/var/run/docker.sock:/var/run/docker.sock" \
         -v "/:/rootfs:ro" \
+        -v "/sys:/sys:ro" \
+        -v "/var/lib/docker/:/var/lib/docker:rw" \
+        -v "/dev:/dev:ro" \
+        -v "/openshift.local.volumes:/openshift.local.volumes:rw" \
         $dockeropts \
         ocdev-origin start \
         --master-config="/ocdev/docker/config/master/master-config.yaml" \
@@ -125,6 +129,10 @@ ocdevopenshift-up() {
 
 ocdevopenshift-down() {
     docker kill origin
+}
+
+ocdevopenshift-logs() {
+    docker logs origin "$@"
 }
 
 ocdevopenshift-create-defaults() {
