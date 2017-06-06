@@ -107,7 +107,7 @@ ocdevopenshift-up() {
     esac
 
     docker run --rm -v /:/rootfs:rw busybox sh -c 'V=/rootfs/openshift.local.volumes; rm -rf $V && mkdir -p $V'
-    docker run --name=origin --privileged --net=host --hostname="$hostname" \
+    docker run -d --name=origin --privileged --net=host --hostname="$hostname" --pid=host \
         -v "$configdir:/ocdev/docker/config" \
         -v "$OCDEV_DOCKER_BINDIR:/openshift/bin" \
         -v "/var/run/docker.sock:/var/run/docker.sock" \
@@ -115,7 +115,7 @@ ocdevopenshift-up() {
         -v "/sys:/sys:ro" \
         -v "/var/lib/docker/:/var/lib/docker:rw" \
         -v "/dev:/dev:ro" \
-        -v "/openshift.local.volumes:/openshift.local.volumes:rw" \
+        -v "/openshift.local.volumes:/openshift.local.volumes:rw,rslave" \
         $dockeropts \
         ocdev-origin start \
         --master-config="/ocdev/docker/config/master/master-config.yaml" \

@@ -3,6 +3,7 @@
 set -efu
 
 export OCDEV_VARDIR=${OCDEV_VARDIR:-$HOME/.ocdev}
+export OCDEV_GOLANG_IMAGE=${OCDEV_GOLANG_IMAGE:-golang:1.7}
 OCDEV_PROGNAME=$(basename "$0")
 
 usage() {
@@ -91,8 +92,8 @@ ocdevutil-init() {
 export -f ocdevutil-init
 
 ocdevutil-docker-init() {
-    [ -n "${OCDEV_DOCKER_GOOS-}" ] || OCDEV_DOCKER_GOOS=$(docker run --rm golang go env GOOS)
-    [ -n "${OCDEV_DOCKER_GOARCH-}" ] || OCDEV_DOCKER_GOARCH=$(docker run --rm golang go env GOARCH)
+    [ -n "${OCDEV_DOCKER_GOOS-}" ] || OCDEV_DOCKER_GOOS=$(docker run --rm "$OCDEV_GOLANG_IMAGE" go env GOOS)
+    [ -n "${OCDEV_DOCKER_GOARCH-}" ] || OCDEV_DOCKER_GOARCH=$(docker run --rm "$OCDEV_GOLANG_IMAGE" go env GOARCH)
     export OCDEV_DOCKER_GOOS OCDEV_DOCKER_GOARCH
 
     export OCDEV_DOCKER_BINDIR="$PWD/_output/local/bin/$OCDEV_DOCKER_GOOS/$OCDEV_DOCKER_GOARCH"
@@ -208,11 +209,12 @@ ocdev-build() {
         if [ "$GOOS" == "$(go env GOHOSTOS)" -a "$GOARCH" == "$(go env GOHOSTARCH)" ]; then
             go build -pkgdir "$pkgdir" -tags "$tags" -ldflags="$ldflags" -i -o "$bindir/$name" -v "github.com/openshift/origin/$pkg"
         elif [ "$GOOS" == "${OSDEV_DOCKER_GOOS-linux}" -a "$GOARCH" == "${OSDEV_DOCKER_GOARCH-amd64}" ]; then
+            echo "CROSS-COMPILE using Docker $OCDEV_GOLANG_IMAGE"
             local w="/go/src/github.com/openshift/origin"
             docker run --rm -i \
                 -v "$PWD:$w:ro,delegated" -w "$PWD" \
                 -v "$bindir:$w/_output/local/bin/$GOOS/$GOARCH:rw,delegated" -v "$pkgdir:$w/_output/local/pkgdir/$GOOS/$GOARCH:rw,delegated" \
-                golang \
+                "$OCDEV_GOLANG_IMAGE" \
                 go build -pkgdir "$w/_output/local/pkgdir/$GOOS/$GOARCH" -tags "$tags" -ldflags="$ldflags" -i -o "$w/_output/local/bin/$GOOS/$GOARCH/$name" -v "github.com/openshift/origin/$pkg"
         else
             fatal "unsupport GOOS=$GOOS GOARCH=$GOARCH"
