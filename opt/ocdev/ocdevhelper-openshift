@@ -106,12 +106,13 @@ ocdevopenshift-up() {
         dockeropts="$dockeropts -v /sys/fs/cgroup:/sys/fs/cgroup:rw"
     esac
 
+    docker run --rm --privileged --pid=host -v /:/rootfs busybox nsenter --mount=/rootfs/proc/1/ns/mnt -- mount --make-rshared /
     docker run --rm -v /:/rootfs:rw busybox sh -c 'V=/rootfs/openshift.local.volumes; rm -rf $V && mkdir -p $V'
     docker run -d --name=origin --privileged --net=host --hostname="$hostname" --pid=host \
         -v "$configdir:/ocdev/docker/config" \
         -v "$OCDEV_DOCKER_BINDIR:/openshift/bin" \
         -v "/var/run/docker.sock:/var/run/docker.sock" \
-        -v "/:/rootfs:ro" \
+        -v "/:/rootfs:ro,slave" \
         -v "/sys:/sys:ro" \
         -v "/var/lib/docker/:/var/lib/docker:rw" \
         -v "/dev:/dev:ro" \
