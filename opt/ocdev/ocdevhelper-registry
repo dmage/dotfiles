@@ -98,7 +98,19 @@ ocdevregistry-update() {
 }
 
 ocdevregistry-exec() {
-    ocdefault exec -i -t $(ocdefault get pods -l deploymentconfig=docker-registry -o name | sed -e 's!^pods/!!') -- "$@"
+    ocdefault exec -i -t "$(ocdefault get pods -l deploymentconfig=docker-registry -o name | sed -e 's!^pods/!!')" -- "$@"
+}
+
+ocdevregistry-enable-schema2() {
+    ocdefault patch dc docker-registry -p '{"spec": {"template":
+      {"spec": {"containers": [{
+        "name": "registry",
+        "env": [
+          {"name": "REGISTRY_MIDDLEWARE_REPOSITORY_OPENSHIFT_ACCEPTSCHEMA2", "value": "true"}
+        ]
+      }]}}
+    }}'
+    ocdefault rollout status dc/docker-registry
 }
 
 ocdevregistry-enable-metrics() {
@@ -160,17 +172,22 @@ ocdevregistry-anonymous-myproject() {
     oc policy add-role-to-user registry-viewer system:anonymous -n myproject
 }
 
+docker-force-pull() {
+    docker pull "$1"
+    docker rmi -f "$(docker inspect --format="{{.ID}}" "$1")"
+    docker pull "$1"
+    docker rmi "$1"
+}
+
 ocdevregistry-generate-garbage() {
     ocdev login-as-developer
     oc project myproject
     docker login -u $(oc whoami) -p $(oc whoami -t) 172.30.1.1:5000
 
     oc import-image dmage-a --from=dmage/example:a --confirm
-    docker pull 172.30.1.1:5000/myproject/dmage-a
-    docker rmi 172.30.1.1:5000/myproject/dmage-a
+    docker-force-pull 172.30.1.1:5000/myproject/dmage-a
     oc import-image dmage-b --from=dmage/example:b --confirm
-    docker pull 172.30.1.1:5000/myproject/dmage-b
-    docker rmi 172.30.1.1:5000/myproject/dmage-b
+    docker-force-pull 172.30.1.1:5000/myproject/dmage-b
     oc delete is/dmage-b
 
     docker pull busybox
@@ -181,6 +198,13 @@ ocdevregistry-generate-garbage() {
     docker push 172.30.1.1:5000/myproject/busybox-glibc
     oc delete is/busybox-glibc
     ocdefault delete image $(ocdefault get images | grep -F /myproject/busybox-glibc@ | cut -d' ' -f1)
+}
+
+ocdevregistry-login-docker() {
+    local U P
+    U="$(oc whoami)"
+    P="$(oc whoami -t)"
+    docker login -u "$U" -p "$P" 172.30.1.1:5000
 }
 
 ocdevutil-main "ocdevregistryhelper-" "ocdevregistry-" "$@"

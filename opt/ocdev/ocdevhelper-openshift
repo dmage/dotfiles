@@ -44,12 +44,17 @@ ocdevopenshift-start() {
     local etcddir="$OCDEV_VARDIR/openshift.local.etcd"
     local volumedir="$OCDEV_VARDIR/openshift.local.volumes"
 
-    "$openshift" start --write-config="$configdir" \
-        --images='openshift/origin-${component}:latest' \
-        --etcd-dir="$etcddir" \
-        --volume-dir="$volumedir"
-    sudo chmod +r "$configdir/master/admin.kubeconfig"
-    cp "$configdir/master/admin.kubeconfig" "$HOME/.kube/config"
+    local hostname
+    hostname=$(hostname -f)
+
+    if [ ! -e "$configdir/master" -o ! -e "$configdir/node-$hostname" ]; then
+        "$openshift" start --write-config="$configdir" \
+            --images='openshift/origin-${component}:latest' \
+            --etcd-dir="$etcddir" \
+            --volume-dir="$volumedir"
+        sudo chmod +r "$configdir/master/admin.kubeconfig"
+        cp "$configdir/master/admin.kubeconfig" "$HOME/.kube/config"
+    fi
 
     sudo "$openshift" start \
         --master-config="$configdir/master/master-config.yaml" \
