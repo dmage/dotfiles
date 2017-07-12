@@ -1,0 +1,31 @@
+#!/bin/sh
+set -eu
+
+c_reset=$(tput sgr0)
+c_bad=$(tput setaf 1)
+c_good=$(tput setaf 2; tput bold)
+
+has_ssh_key() {
+    local f fp
+    for f in ~/.ssh/*.pub; do
+        fp=$(ssh-keygen -E md5 -lf "$f" | cut -d' ' -f2)
+        if [ "$fp" == "$1" ]; then
+            return 0
+        fi
+    done
+    return 1
+}
+
+has_gpg_key() {
+    gpg --list-keys "$1" >/dev/null
+}
+
+check_if() {
+    "$@" && echo "${c_good}present${c_reset}" || echo "${c_bad}absent${c_reset}"
+}
+
+echo "=== SSH keys"
+echo "Laptop: $(check_if has_ssh_key MD5:6a:09:17:48:69:51:3e:8d:3f:b8:29:82:ef:c4:60:ce)"
+echo
+echo "=== GPG keys"
+echo "Main: $(check_if has_gpg_key 73535827B1347F11C34677A913A50196A77666DE)"
