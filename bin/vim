@@ -1,0 +1,16 @@
+#!/bin/sh
+
+VIM=/usr/bin/vim
+
+if [ $# -ne 1 ]; then
+    exec "$VIM" "$@"
+fi
+
+F="$1"
+F=${F#[ab]/}
+LINE=${F##*:}
+if [ "$LINE" != "$F" ]; then
+    F=${F%:*}
+    exec "$VIM" "$F" "+$LINE"
+fi
+exec "$VIM" "$F"

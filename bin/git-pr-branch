@@ -1,0 +1,13 @@
+#!/bin/sh
+set -efu
+
+[ $# -eq 3 ] || {
+    echo "usage: git pr-branch <repository> <pr-number> <new-branch>"
+    exit 1
+}
+
+REPOSITORY=$1
+PR=$2
+NEW_BRANCH=$3
+
+git fetch "$REPOSITORY" "refs/pull/$PR/head:$NEW_BRANCH"

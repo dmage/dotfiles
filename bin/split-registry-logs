@@ -1,0 +1,17 @@
+#!/bin/sh
+set -efu
+
+F=$1
+
+grep -o 'http.request.id=[0-9a-f-]*' "$F" | cut -d= -f2 | while read -r id; do
+    ID=$(echo "$id" | sed -e 's/-/_/g')
+    if [ "$(eval "echo \${SEEN_$ID-}")" != "" ]; then
+        continue
+    fi
+
+    echo "=== REQUEST $id"
+    grep -F " http.request.id=$id" "$F"
+    echo
+
+    eval "SEEN_$ID=1"
+done
