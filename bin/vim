@@ -8,6 +8,7 @@ fi
 
 F="$1"
 F=${F#[ab]/}
+F=${F%:}
 LINE=${F##*:}
 if [ "$LINE" != "$F" ]; then
     F=${F%:*}

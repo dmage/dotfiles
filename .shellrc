@@ -30,6 +30,10 @@ gocd() {
     cd "$GOPATH/src/$@"
 }
 
+govim() {
+    vim "$GOPATH/src/$@"
+}
+
 # openshift origin
 _OS_VARDIR=/var/lib/origin
 os-init() {
