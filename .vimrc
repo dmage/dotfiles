@@ -26,11 +26,10 @@ nmap <silent> <M-Right> :wincmd l<CR>
 " }}}
 
 " {{{ persistent undo
-try
+if has('persistent_undo')
   set undodir=~/.vim/undo
   set undofile
-catch
-endtry
+endif
 " }}}
 
 " {{{ Vundle
