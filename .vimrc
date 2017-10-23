@@ -59,6 +59,7 @@ Plugin 'tpope/vim-endwise'
 Plugin 'leafgarland/typescript-vim'
 Plugin 'ciaranm/securemodelines'
 Plugin 'fatih/vim-go'
+Plugin 'dgryski/vim-godef'
 
 Plugin 'nginx/nginx', {'name': 'nginx-syntax', 'rtp': 'contrib/vim'}
 
