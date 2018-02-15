@@ -20,7 +20,7 @@ job() {
 N=$1; shift
 while [ "$N" -gt 0 ]; do
     N=$((N - 1))
-    job "$@"&
+    BLOWER_ID=$N job "$@"&
 done
 
 # wait for interrupt
