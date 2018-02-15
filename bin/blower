@@ -1,0 +1,27 @@
+#!/bin/sh
+set -efu
+
+if [ $# -lt 2 ]; then
+    cat >&2 <<END
+usage: $0 <N> <command>
+
+Run up to N instances of the command in parallel. Completed commands will be
+started again and again until the main process is terminated.
+END
+    exit 2
+fi
+
+job() {
+    while kill -0 "$$" 2>/dev/null; do
+        "$@" || true
+    done
+}
+
+N=$1; shift
+while [ "$N" -gt 0 ]; do
+    N=$((N - 1))
+    job "$@"&
+done
+
+# wait for interrupt
+while true; do sleep 60; done
