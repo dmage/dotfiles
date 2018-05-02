@@ -1,0 +1,37 @@
+source ~/.mutt/credentails
+
+set folder="imaps://imap.yandex.com:993/"
+set spoolfile="+INBOX"
+set header_cache=~/.mutt/cache/headers
+set move=no
+
+set smtp_url="smtps://$my_smtp_user@smtp.yandex.com:465/"
+set realname="Oleg Bulatov"
+set from="oleg@bulatov.me"
+set use_from=yes
+set send_charset="utf-8"
+set editor='vim + -c "set textwidth=72" -c "set wrap" -c "set spell spelllang=en"'
+set edit_headers=yes
+
+set sort="threads"
+set strict_threads="yes"
+set sort_browser="reverse-date"
+set sort_aux="last-date-received"
+folder-hook . "exec collapse-all"
+
+set mailcap_path=~/.mutt/mailcap
+alternative_order text/plain text
+auto_view text/html
+
+color index yellow default "~v~(!~N)~(!~F)" # collapsed thread with no New or Flagged
+color index red    default "~v~(~F)~(!~N)"  # collapsed thread with Flagged but no New
+color index green  default "~v~(~N)"        # collapsed thread with New
+
+color hdrdefault blue  default
+color quoted     blue  default
+color signature  blue  default
+color attachment red   default
+color indicator  black cyan
+
+bind pager <up> previous-line
+bind pager <down> next-line
