@@ -1,4 +1,5 @@
-#!/bin/sh
+#!/bin/bash
+set -eu
 
 out=$1
 [ -n "$out" ] || {
@@ -6,11 +7,37 @@ out=$1
     exit 1
 }
 
+openssl_config() {
+    cat <<END
+[req]
+distinguished_name = subject
+req_extensions = req_ext
+x509_extensions = req_ext
+prompt = no
+
+[subject]
+CN = example.com
+
+[req_ext]
+keyUsage = digitalSignature, keyEncipherment
+subjectAltName = @alternate_names
+
+[alternate_names]
+DNS.1 = example.com
+DNS.2 = www.example.com
+IP.1 = 192.0.2.1
+END
+}
+
 mkdir -p "$out" || exit 1
 
 # Generate a public/private key pair
-openssl genrsa -out "$out/key.pem" 1024
+openssl genrsa -out "$out/key.pem" 4096
 chmod 400 "$out/key.pem"
 
 # Generate a self signed certificate
-openssl req -new -x509 -key "$out/key.pem" -days 365 -out "$out/cert.pem"
+openssl req -new -x509 \
+    -key "$out/key.pem" \
+    -config <(openssl_config) \
+    -out "$out/cert.pem"
+openssl x509 -in "$out/cert.pem" -noout -text
