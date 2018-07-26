@@ -1,101 +1,82 @@
-#! perl
-use Data::Dumper;
-### Easier to visualize data structs with dd.  "print Dumper($var);" to use.. ###
-my %handlers;
+#!/usr/bin/env perl
 
 sub msg {
    my ($self, $msg) = @_;
 
-   my $overlay = $self->overlay (0, 0, $self->strwidth ($msg), 1);
-   $overlay->set (0, 0, $msg);
-   my $iow; $iow = urxvt::timer->new->after (1)->cb (sub {
+   my $overlay = $self->overlay(0, 0, $self->strwidth($msg), 1);
+   $overlay->set(0, 0, $msg);
+   my $iow; $iow = urxvt::timer->new->after(1)->cb(sub {
       undef $overlay;
       undef $iow;
    });
 }
 
-
-sub handle_on_exec {
-    my ($term, $line) = @_;
-
-    print "handling exec()\n";
-    $term->exec_async($line);
-}
-
-sub handle_on_menu {
-    my ($term, $line) = @_;
-
-    print "handling menu()\n";
-}
-
-sub handle_on_send {
-    my ($term, $line) = @_;
-
-    my $octets = $term->locale_encode($line);
-    $term->tt_write($octets);
-}
-
-$handlers{exec} = \&handle_on_exec;
-$handlers{menu} = \&handle_on_menu;
-$handlers{send} = \&handle_on_send;
+my %handlers = (
+    menu => sub {},
+    exec => sub {
+        my ($term, $line, @match) = @_;
+        $term->exec_async("/bin/sh", "-c", $line, @match);
+    },
+    send => sub {
+        my ($term, $line, @match) = @_;
+        my $out = $line;
+        $out =~ s/\$([0-9]+)/$match[$1]/ge;
+        my $octets = $term->locale_encode($out);
+        $term->tt_write($octets);
+    },
+);
 
 sub build_menu {
     my ($term, $popup, $fh, $selection) = @_;
 
     while (<$fh>) {
         # comment, blank or spaces
-        next if (/^(#.*|\s*)$/);
+        next if /^\s*(?:#.*)?$/;
 
-        # /regex/ "title" cmd and args...
-        if (/^(.*)\s+(".*")\s+(exec|send|menu)\s+(".*")/x) {
+        # <regex> "<title>" <command> "<argument>"
+        if (/^(.*)\s+"(.*)"\s+(exec|send|menu)\s+"(.*)"$/x) {
             my ($regex, $display, $cmd, $line) = ($1, $2, $3, $4);
 
-            print "[$regex] [$display] [$cmd] [$line]\n";
-
-            # test the $regex against the $selection ##XXX not working
-            if ($selection !~ /$regex/ && $regex ne "MATCHALL" ) {
-	        next;
-	    }
-
-            # prepare the cmd line for the handler
-            my $cmdline = eval ( $line );
+            my (@match);
+            if ($regex eq "MATCHALL") {
+                @match = ($selection);
+            } else {
+                @match = ($selection =~ /$regex/);
+                next if !@match;
+                @match = ($selection, @match);
+            }
 
             # prepare the display string for the option
-            my $title = eval ( $display );
+            my $title = $display;
+            $title =~ s/\$([0-9]+)/$match[$1]/ge;
+            $title =~ s/[\x00-\x1f\x80-\x9f]/·/g;
+            substr $title, 40, -3, "..." if length $title > 40;
 
-            substr $title, 40, -1, "..." if 40 < length $title;
-
-            $popup->add_button($title,
-                sub {
-                    $handlers{$cmd}->($term, $cmdline, $selection)
-                }
-            );
-        }
-        # dashes
-        elsif ($_ =~ /^-+/) {
-             $popup->add_separator;
+            $popup->add_button($title, sub {
+                $handlers{$cmd}->($term, $line, @match);
+            });
+        } elsif ($_ =~ /^-+/) {
+            $popup->add_separator;
+        } else {
+            $popup->add_button("please fix your ctx-menu.txt file: $_", sub {});
         }
     }
 }
 
 sub on_start {
    my ($self) = @_;
-
-   $self->{browser} = $self->x_resource ("urlLauncher") || "sensible-browser";
-
-   $self->grab_button (3);
-
-   ()
+   $self->grab_button(3);
+   return;
 }
 
 sub on_button_press {
    my ($self, $event) = @_;
 
    if ($event->{button} != 3) {
-     return ();
+     return;
    }
 
-   my $popup = $self->popup ($event)
+   my $popup = $self->popup($event)
       or return 1;
 
    # set the title {
@@ -107,9 +88,8 @@ sub on_button_press {
    my $title = $text;
    $title =~ s/[\x00-\x1f\x80-\x9f]/·/g;
    substr $title, 40, -1, "..." if 40 < length $title;
-   $popup->add_title ($title);
+   $popup->add_title($title);
    $popup->add_separator;
-   # } 
 
    # e.g.: ~/.Xresources URxvt.context-menu: ~/.urxvt.ctx-menu
    # $fname = $self->x_resource("context-menu");
@@ -121,4 +101,3 @@ sub on_button_press {
 
    return 1;
 }
-
