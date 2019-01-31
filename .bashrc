@@ -54,5 +54,5 @@ esac
 
 eval "$(ocdev bash-completion)"
 alias oc='ocdev oc'
-alias oadmdefault='ocdev oadm'
+alias kubectl='ocdev kubectl'
 alias ocdefault='ocdev ocdefault'
