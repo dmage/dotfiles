@@ -1,9 +1,14 @@
 #!/bin/bash
 set -e
 
+fatal() {
+    printf >&2 "%s\n" "$*"
+    exit 1
+}
+
 BRANCH=$(git rev-parse --abbrev-ref HEAD)
-REMOTE=$(git config branch.$BRANCH.remote)
-MERGE=$(git config branch.$BRANCH.merge)
+REMOTE=$(git config branch.$BRANCH.remote || fatal "no remote branch")
+MERGE=$(git config branch.$BRANCH.merge || fatal "no merge branch")
 
 if [[ "$MERGE" != refs/heads/* ]]; then
     echo "git up: unexpected branch.$BRANCH.merge: $MERGE" >&2

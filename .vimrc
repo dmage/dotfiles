@@ -18,6 +18,8 @@ cmap w!! w !sudo tee % >/dev/null
 " bash-like tab completion
 set wildmode=longest,list
 
+let g:go_test_timeout="20s"
+
 " {{{ moving between windows
 nmap <silent> <M-Up> :wincmd k<CR>
 nmap <silent> <M-Down> :wincmd j<CR>
