@@ -1,8 +1,5 @@
 # .bash_profile
-[[ -d ~/.bash_profile.d ]] && \
-    for f in ~/.bash_profile.d/*; do
-        . $f
-    done
+export DEBUG_INIT_SCRIPTS="${DEBUG_INIT_SCRIPTS:-} .bash_profile"
 
 [[ -f ~/.profile ]] && . ~/.profile
 

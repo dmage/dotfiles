@@ -1,4 +1,6 @@
 # .bashrc
+export DEBUG_INIT_SCRIPTS="${DEBUG_INIT_SCRIPTS:-} .bashrc"
+
 if [[ $- != *i* ]] ; then
     # Shell is non-interactive.  Be done now!
     return

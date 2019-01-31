@@ -1,3 +1,6 @@
+# .shell_aliases
+export DEBUG_INIT_SCRIPTS="${DEBUG_INIT_SCRIPTS:-} .shell_aliases"
+
 case `uname -s` in
 Darwin)
 	alias ls='ls -G'

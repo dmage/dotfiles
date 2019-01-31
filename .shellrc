@@ -1,4 +1,6 @@
 # .shellrc
+export DEBUG_INIT_SCRIPTS="${DEBUG_INIT_SCRIPTS:-} .shellrc"
+
 export PATH="$HOME/bin:$HOME/opt/ocdev:$PATH"
 CDPATH=".:$HOME/src/github.com/dmage"
 
