@@ -19,7 +19,7 @@ for line in fileinput.input(files=args.files):
     while line:
         match = entry_re.match(line)
         if not match:
-            raise RuntimeError("unexpected line suffix: " + repr(line))
+            raise RuntimeError("got {} and unexpected line suffix: {}".format(repr(record), repr(line)))
         line = line[len(match.group(0)):]
         key, value = match.group(1), match.group(2)
         if args.ids:
