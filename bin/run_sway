@@ -1,0 +1,12 @@
+#!/bin/sh
+
+# GDK_BACKEND should be unset or some programs may work incorrectly.
+# https://github.com/swaywm/sway/wiki/Running-programs-natively-under-wayland
+unset GDK_BACKEND
+
+# Experimental Wayland support in Firefox.
+export MOZ_ENABLE_WAYLAND=1
+
+exec \
+    dbus-launch --sh-syntax --exit-with-session \
+    sway
