@@ -129,8 +129,6 @@ bindsym $mod+Shift+c reload
 bindsym $mod+Shift+r restart
 # exit i3 (logs you out of your X session)
 bindsym $mod+Shift+e exec "swaynag -t warning -m 'You pressed the exit shortcut. Do you really want to exit sway?' -b 'Yes, exit sway' 'swaymsg exit'"
-# lock screen
-bindsym Mod1+Mod4+L exec --no-startup-id swaylock -c "#000000" -F
 
 # resize window (you can also use the mouse for that)
 mode "resize" {
@@ -163,6 +161,13 @@ bindsym $mod+r mode "resize"
 bar {
     status_command i3status
 }
+
+# lock screen
+bindsym Mod1+Mod4+L exec --no-startup-id swaylock -c 000000 -F
+exec swayidle -w \
+	timeout 300 'swaylock -f -c 000000 -F' \
+	timeout 600 'swaymsg "output * dpms off"' \
+		resume 'swaymsg "output * dpms on"'
 
 # PulseAudio
 exec "pulseaudio --start"
