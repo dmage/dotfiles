@@ -16,7 +16,14 @@ cover() {
 goenv() {
     local version=$1
     shift
-    local goversion=$(cd "$HOME/goroot"; echo go$version*/)
+    local goversion=$(
+        if [ -e "$HOME/goroot/$version" ]; then
+            echo "$version/"
+        else
+            cd "$HOME/goroot"
+            echo "go$version"*/
+        fi
+    )
     if [ -e "$HOME/goroot/$goversion" ]; then
         env GOROOT="$HOME/goroot/$goversion" PATH="$HOME/goroot/$goversion/bin:$PATH" "$@"
     elif [ "$goversion" == "go$version*/" ]; then

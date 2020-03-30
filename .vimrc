@@ -22,6 +22,7 @@ map ш i
 set wildmode=longest,list
 
 let g:go_test_timeout="20s"
+let g:go_metalinter_enabled = ['vet', 'golint', 'errcheck']
 
 " {{{ moving between windows
 nmap <silent> <M-Up> :wincmd k<CR>
@@ -130,6 +131,8 @@ let g:secure_modelines_allowed_items = [
 au FileType vim setl et ts=2 sts=2 sw=2 foldmethod=marker
 au FileType yaml setl et ts=2 sts=2 sw=2
 au FileType yaml setl indentkeys-=<:>
+au FileType c setl noet
+au FileType lex setl noet
 
 " jump to the last position when reopening a file
 au BufReadPost * if line("'\"") > 1 && line("'\"") <= line("$") | exe "normal! g'\"" | endif
