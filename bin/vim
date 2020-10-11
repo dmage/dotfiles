@@ -1,6 +1,6 @@
 #!/bin/sh
 
-VIM=/usr/bin/vim
+VIM=/usr/local/bin/vim
 
 if [ $# -ne 1 ]; then
     exec "$VIM" "$@"

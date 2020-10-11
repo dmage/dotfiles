@@ -16,13 +16,8 @@ cmap w!! w !sudo tee % >/dev/null
 " allows to use <i> key in the cyrillic layout
 map ш i
 
-:inoremap <lt>/ </<C-X><C-O>
-
 " bash-like tab completion
 set wildmode=longest,list
-
-let g:go_test_timeout="20s"
-let g:go_metalinter_enabled = ['vet', 'golint', 'errcheck']
 
 " {{{ moving between windows
 nmap <silent> <M-Up> :wincmd k<CR>
@@ -54,7 +49,6 @@ Plugin 'altercation/vim-colors-solarized'
 Plugin 'nanotech/jellybeans.vim'
 
 Plugin 'ack.vim'
-Plugin 'ctrlp.vim'
 Plugin 'bling/vim-airline'
 Plugin 'vim-airline/vim-airline-themes'
 Plugin 'mhinz/vim-signify'
@@ -66,6 +60,7 @@ Plugin 'leafgarland/typescript-vim'
 Plugin 'ciaranm/securemodelines'
 Plugin 'fatih/vim-go'
 Plugin 'dgryski/vim-godef'
+Plugin 'vimwiki/vimwiki'
 
 Plugin 'nginx/nginx', {'name': 'nginx-syntax', 'rtp': 'contrib/vim'}
 
@@ -127,12 +122,27 @@ let g:secure_modelines_allowed_items = [
       \ ]
 " }}}
 
+" {{{ go
+let g:go_test_timeout="20s"
+let g:go_metalinter_enabled = ['vet', 'golint', 'errcheck']
+let g:go_test_show_name=1
+" }}}
+
+" {{{ html
+:inoremap <lt>/ </<C-X><C-O>
+" }}}
+
+" {{{ vimwiki
+let g:vimwiki_hl_cb_checked=2
+" }}}
+
 " {{{ autocmd vim
 au FileType vim setl et ts=2 sts=2 sw=2 foldmethod=marker
 au FileType yaml setl et ts=2 sts=2 sw=2
 au FileType yaml setl indentkeys-=<:>
 au FileType c setl noet
 au FileType lex setl noet
+au FileType vimwiki setl et ts=2 sts=2 sw=2
 
 " jump to the last position when reopening a file
 au BufReadPost * if line("'\"") > 1 && line("'\"") <= line("$") | exe "normal! g'\"" | endif
