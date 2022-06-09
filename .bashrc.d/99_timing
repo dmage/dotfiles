@@ -13,8 +13,24 @@ __bash_timing__format_us() {
         divide_prec $1 1000 100
         printf " ms\n"
     else
-        divide_prec $1 1000000 100
-        printf " s\n"
+        local t=$1 sep=
+        if [ $t -gt 3600000000 ]; then
+            printf "$(($t / 3600000000)) h"
+            t=$(($t % 3600000000))
+            sep=" "
+        fi
+        if [ $t -gt 60000000 ]; then
+            printf "%s" "$sep"
+            printf "$(($t / 60000000)) min"
+            t=$(($t % 60000000))
+            sep=" "
+        fi
+        if [ $t -gt 0 ]; then
+            printf "%s" "$sep"
+            divide_prec $t 1000000 100
+            printf " s"
+        fi
+        printf "\n"
     fi
 }
 
