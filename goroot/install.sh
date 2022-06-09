@@ -11,9 +11,11 @@ fi
 
 if [ -n "${GOVERSION##1.[01234].*}" ]; then
     # Go 1.5+ requires GOROOT_BOOTSTRAP
-    GOVERSION_BOOTSTRAP=$(ls ./go1.*/bin/go | sort -nrt. -k3,3 | sort -nrst. -k2,2 | head -n1)
-    GOVERSION_BOOTSTRAP=${GOVERSION_BOOTSTRAP%/bin/go}
-    GOVERSION_BOOTSTRAP=${GOVERSION_BOOTSTRAP#./go}
+    if [ -z "${GOVERSION_BOOTSTRAP-}" ]; then
+        GOVERSION_BOOTSTRAP=$(ls ./go1.*/bin/go | sort -nrt. -k3,3 | sort -nrst. -k2,2 | head -n1)
+        GOVERSION_BOOTSTRAP=${GOVERSION_BOOTSTRAP%/bin/go}
+        GOVERSION_BOOTSTRAP=${GOVERSION_BOOTSTRAP#./go}
+    fi
     if [ -z "${GOVERSION_BOOTSTRAP##1.[0123].*}" ]; then
         ./install.sh 1.4.3
         export GOROOT_BOOTSTRAP="$PWD/go1.4.3"
