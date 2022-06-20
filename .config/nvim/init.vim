@@ -1,12 +1,3 @@
-set backspace=indent,eol,start
-set mouse=n
-
-" {{{ restore cursor position
-if has("autocmd")
-  au BufReadPost * if line("'\"") > 1 && line("'\"") <= line("$") | exe "normal! g'\"" | endif
-endif
-" }}}
-
 " {{{ plugins
 call plug#begin()
 Plug 'fatih/vim-go'
@@ -16,25 +7,25 @@ Plug 'mhinz/vim-signify'
 Plug 'nanotech/jellybeans.vim'
 Plug 'tpope/vim-fugitive'
 Plug 'vimwiki/vimwiki'
+Plug 'psliwka/vim-smoothie'
 Plug 'neovim/nvim-lspconfig'
+Plug 'nvim-lua/plenary.nvim' " required by null-ls
+Plug 'jose-elias-alvarez/null-ls.nvim'
 call plug#end()
 " }}}
 
-" {{{ colors
-set t_Co=256
-colorscheme jellybeans
-hi link xmlEndTag Function
-" }}}
+"" {{{ core vim settings
+" restore cursor position
+au BufReadPost * if line("'\"") > 1 && line("'\"") <= line("$") | exe "normal! g'\"" | endif
 
-" {{{ GitHub Copilot
-let g:copilot_filetypes = {
-  \ 'ledger': v:false,
-  \ }
-" }}}
+" automatically reload vim config
+aug AutoloadVimrc
+  au!
+  au BufWritePost $MYVIMRC source %
+aug END
 
-" {{{ vimwiki
-let g:vimwiki_list = [{'path': '~/vimwiki/', 'syntax': 'markdown', 'ext': '.md'}]
-let g:vimwiki_hl_cb_checked=2
+" enable mouse in normal mode
+set mouse=n
 " }}}
 
 "" {{{ filetype specific settings
@@ -45,11 +36,36 @@ au FileType yaml setl et ts=2 sts=2 sw=2
 au FileType yaml setl indentkeys-=<:>
 " }}}
 
-" {{{ Go
+" {{{ colors
+set t_Co=256
+let g:jellybeans_overrides = {
+  \ 'NormalFloat': { 'guibg': '444444' },
+  \ 'DiagnosticInfo': { 'guifg': '005fff' },
+  \ 'DiagnosticFloatingError': { 'guifg': 'ff6666' },
+  \ 'DiagnosticFloatingInfo': { 'guifg': '669fff' },
+  \ }
+colorscheme jellybeans
+hi link xmlEndTag Function
+" }}}
+
+" {{{ GitHub Copilot
+let g:copilot_filetypes = {
+  \ 'ledger': v:false,
+  \ }
+" }}}
+
+" {{{ smooth animation
+let g:smoothie_speed_constant_factor = 15
+let g:smoothie_speed_linear_factor = 15
+" }}}
+
+" {{{ vimwiki
+let g:vimwiki_list = [{'path': '~/vimwiki/', 'syntax': 'markdown', 'ext': '.md'}]
+let g:vimwiki_hl_cb_checked = 2
+" }}}
+
+" {{{ vim-go
 let g:go_doc_popup_window = 1
-let g:go_diagnostics_enabled = 1
-let g:go_diagnostics_level = 2
-let g:go_gopls_staticcheck = 1
 " }}}
 
 lua << EOF
@@ -101,5 +117,18 @@ for _, lsp in pairs(servers) do
     }
   }
 end
+-- }}}
+
+-- {{{ null-ls
+require("null-ls").setup {
+  sources = {
+    require("null-ls").builtins.diagnostics.flake8.with {
+      extra_args = { "--extend-ignore=F401" },
+    },
+    require("null-ls").builtins.code_actions.shellcheck,
+    require("null-ls").builtins.diagnostics.shellcheck,
+    require("null-ls").builtins.diagnostics.staticcheck,
+  },
+}
 -- }}}
 EOF
