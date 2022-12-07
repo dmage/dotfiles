@@ -1,0 +1,23 @@
+#!/bin/sh -eu
+URL=$1
+
+if [ -z "${URL##*://*}" ]; then
+    PKG=${URL#*://}
+elif [ -z "${URL#*@*:*.git}" ]; then
+    PKG=${URL#*@}
+    PKG=${PKG%.git}
+    host=${PKG%%:*}
+    path=${PKG#*:}
+    PKG="$host/$path"
+else
+    PKG=$URL
+    URL="https://$PKG"
+fi
+
+DIR="$HOME/src/$PKG"
+PARENT_DIR=${DIR%/*}
+
+mkdir -p "$PARENT_DIR"
+if [ ! -d "$DIR" ]; then
+    git clone "$URL" "$DIR"
+fi
