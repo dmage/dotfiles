@@ -21,3 +21,5 @@ mkdir -p "$PARENT_DIR"
 if [ ! -d "$DIR" ]; then
     git clone "$URL" "$DIR"
 fi
+
+echo "$DIR"

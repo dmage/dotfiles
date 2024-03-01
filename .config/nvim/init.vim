@@ -6,11 +6,9 @@ Plug 'ledger/vim-ledger'
 Plug 'mhinz/vim-signify'
 Plug 'nanotech/jellybeans.vim'
 Plug 'tpope/vim-fugitive'
-Plug 'vimwiki/vimwiki'
 Plug 'psliwka/vim-smoothie'
+Plug 'dense-analysis/ale'
 Plug 'neovim/nvim-lspconfig'
-Plug 'nvim-lua/plenary.nvim' " required by null-ls
-Plug 'jose-elias-alvarez/null-ls.nvim'
 call plug#end()
 " }}}
 
@@ -68,6 +66,16 @@ let g:vimwiki_hl_cb_checked = 2
 let g:go_doc_popup_window = 1
 " }}}
 
+" {{{ ALE
+let g:ale_use_neovim_diagnostics_api = 1
+let g:ale_linters = {
+  \ 'go': ['gofmt', 'govet', 'staticcheck'],
+  \ }
+let g:ale_linters_ignore = {
+  \ 'python': ['pyright'],
+  \ }
+" }}}
+
 lua << EOF
 -- {{{ lspconfig
 -- Mappings.
@@ -102,12 +110,12 @@ local on_attach = function(client, bufnr)
   vim.keymap.set('n', '<space>rn', vim.lsp.buf.rename, bufopts)
   vim.keymap.set('n', '<space>ca', vim.lsp.buf.code_action, bufopts)
   vim.keymap.set('n', 'gr', vim.lsp.buf.references, bufopts)
-  vim.keymap.set('n', '<space>f', vim.lsp.buf.formatting, bufopts)
+  vim.keymap.set('n', '<space>f', function() vim.lsp.buf.format { async = true } end, bufopts)
 end
 
 -- Use a loop to conveniently call 'setup' on multiple servers and
 -- map buffer local keybindings when the language server attaches
-local servers = { 'pyright' }
+local servers = { 'pyright', 'tsserver', 'rust_analyzer' }
 for _, lsp in pairs(servers) do
   require('lspconfig')[lsp].setup {
     on_attach = on_attach,
@@ -117,18 +125,5 @@ for _, lsp in pairs(servers) do
     }
   }
 end
--- }}}
-
--- {{{ null-ls
-require("null-ls").setup {
-  sources = {
-    require("null-ls").builtins.diagnostics.flake8.with {
-      extra_args = { "--extend-ignore=F401" },
-    },
-    require("null-ls").builtins.code_actions.shellcheck,
-    require("null-ls").builtins.diagnostics.shellcheck,
-    require("null-ls").builtins.diagnostics.staticcheck,
-  },
-}
 -- }}}
 EOF

@@ -12,3 +12,5 @@ NEW_BRANCH=pr$2
 
 git fetch "$REPOSITORY" "refs/pull/$PR/head:$NEW_BRANCH"
 git checkout "$NEW_BRANCH"
+git config branch."$NEW_BRANCH".remote "$REPOSITORY"
+git config branch."$NEW_BRANCH".merge "refs/pull/$PR/head"

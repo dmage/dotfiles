@@ -45,22 +45,23 @@ call vundle#begin()
 " let Vundle manage Vundle, required
 Plugin 'gmarik/Vundle.vim'
 
-Plugin 'altercation/vim-colors-solarized'
+"Plugin 'altercation/vim-colors-solarized'
 Plugin 'nanotech/jellybeans.vim'
 
-Plugin 'ack.vim'
 Plugin 'bling/vim-airline'
 Plugin 'vim-airline/vim-airline-themes'
 Plugin 'mhinz/vim-signify'
 Plugin 'tpope/vim-fugitive'
-Plugin 'scrooloose/syntastic'
+"Plugin 'scrooloose/syntastic'
 Plugin 'bronson/vim-trailing-whitespace'
-Plugin 'tpope/vim-endwise'
-Plugin 'leafgarland/typescript-vim'
+"Plugin 'tpope/vim-endwise'
+"Plugin 'leafgarland/typescript-vim'
 Plugin 'ciaranm/securemodelines'
 Plugin 'fatih/vim-go'
-Plugin 'dgryski/vim-godef'
 Plugin 'vimwiki/vimwiki'
+Plugin 'ledger/vim-ledger'
+Plugin 'preservim/nerdtree'
+Plugin 'JamshedVesuna/vim-markdown-preview'
 
 Plugin 'nginx/nginx', {'name': 'nginx-syntax', 'rtp': 'contrib/vim'}
 
@@ -133,7 +134,17 @@ let g:go_test_show_name=1
 " }}}
 
 " {{{ vimwiki
+let g:vimwiki_list = [{'path': '~/vimwiki/', 'syntax': 'markdown', 'ext': '.md'}]
 let g:vimwiki_hl_cb_checked=2
+" }}}
+
+" {{{ vim-ledger
+let g:ledger_accounts_cmd='ledger accounts'
+" }}}
+
+" {{{ vim-markdown-preview
+let vim_markdown_preview_github=1
+let vim_markdown_preview_browser='Google Chrome'
 " }}}
 
 " {{{ autocmd vim

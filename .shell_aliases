@@ -12,15 +12,14 @@ Darwin)
 esac
 
 alias cfgit='git --git-dir="$HOME/.cfgit" --work-tree="$HOME"'
+alias hl='hledger -f $HOME/Documents/Ledger/hledger.ldg'
 
 alias grep='grep --color=auto --exclude=tags'
 alias ack='ack --color-match=bold\ red'
-alias pack='tar --dereference --exclude build --exclude .git --exclude .gitignore'
 
 alias gbranch='git branch --color'
 alias gdiff='git diff --color'
 alias glog='git log --color --decorate --show-signature -p'
-alias gg=glog
 alias glogstat='git log --color --decorate --show-signature --stat'
 alias ggraph='git log --color --graph --oneline --decorate'
 alias gtree=ggraph

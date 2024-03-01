@@ -62,6 +62,13 @@ wd() {
     fi
 }
 
+# virtualenvs
+ve-data() {
+    virtualenv "$HOME/.local/share/ve-data"
+    . "$HOME/.local/share/ve-data/bin/activate"
+    pip install numpy pandas matplotlib jupyterlab ipympl pyyaml
+}
+
 # source other files
 [ -f ~/.shell_aliases ] && . ~/.shell_aliases
 [ -f ~/.shellrc.local ] && . ~/.shellrc.local
