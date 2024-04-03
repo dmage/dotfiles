@@ -1,10 +1,15 @@
 GIT_PS1=''
 #macOS#
-if [ -r "/usr/local/etc/bash_completion.d/git-prompt.sh" ]; then
+if [ -r "/opt/homebrew/etc/bash_completion.d/git-prompt.sh" ]; then
+    . "/opt/homebrew/etc/bash_completion.d/git-prompt.sh"
+    GIT_PS1='$(__git_ps1)'
+elif [ -r "/usr/local/etc/bash_completion.d/git-prompt.sh" ]; then
     . "/usr/local/etc/bash_completion.d/git-prompt.sh"
     GIT_PS1='$(__git_ps1)'
 fi
-if [ -r "/usr/local/etc/bash_completion.d/git-completion.bash" ]; then
+if [ -r "/opt/homebrew/etc/bash_completion.d/git-completion.bash" ]; then
+    . "/opt/homebrew/etc/bash_completion.d/git-completion.bash"
+elif [ -r "/usr/local/etc/bash_completion.d/git-completion.bash" ]; then
     . "/usr/local/etc/bash_completion.d/git-completion.bash"
 fi
 #Gentoo#
