@@ -1,3 +1,7 @@
+" {{{ custom key mappings
+cmap w!! w !sudo tee % >/dev/null
+" }}}
+
 " {{{ plugins
 let data_dir = has('nvim') ? stdpath('data') . '/site' : '~/.vim'
 if empty(glob(data_dir . '/autoload/plug.vim'))
