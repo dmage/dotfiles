@@ -50,8 +50,3 @@ esac
     for f in ~/.bashrc.d/*; do
         . $f
     done
-
-eval "$(ocdev bash-completion)"
-alias oc='ocdev oc'
-alias kubectl='ocdev kubectl'
-alias ocdefault='ocdev ocdefault'
