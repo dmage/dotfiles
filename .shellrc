@@ -43,6 +43,9 @@ govim() {
     vim "$GOPATH/src/$@"
 }
 
+# rust
+export PATH="$HOME/.cargo/bin:$PATH"
+
 # fix $TERM in tmux
 [ -n "$TMUX" ] && export TERM=screen-256color
 
